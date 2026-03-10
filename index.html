@@ -397,7 +397,7 @@ tr:hover td{background:rgba(41,171,226,0.03);}
 </style>
 </head>
 <body>
-<div id="login-overlay" style="display:none;">
+<div id="login-overlay">
   <div class="login-box">
     <div class="login-logo">
       <div style="background:#29ABE2;border-radius:6px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1rem;color:#0B1628;font-family:Arial Black,sans-serif;">S</div>
@@ -479,7 +479,7 @@ tr:hover td{background:rgba(41,171,226,0.03);}
 <div class="app">
 
 <!-- SIDEBAR -->
-<aside class="sidebar">
+<aside class="sidebar" style="display:none;">
   <div class="sb-brand">
     <!-- SKILL in a box logo — matches brand: 3 horizontal stripes + bold SKILL + "in a box" -->
     <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.3rem;">
@@ -525,7 +525,7 @@ tr:hover td{background:rgba(41,171,226,0.03);}
 </aside>
 
 <!-- MAIN -->
-<main class="main">
+<main class="main" id="main-content" style="display:none;">
   <div class="top-bar">
     <div>
       <div class="dept-tag">SKILLINABOX / OPERATIONS</div>
@@ -2385,17 +2385,20 @@ function initAuth(firebaseApp){
       // Logged in
       currentUser = user;
       document.getElementById('login-overlay').style.display = 'none';
+      document.getElementById('main-content').style.display = '';
+      document.querySelector('.sidebar').style.display = '';
       document.getElementById('user-badge').style.display = 'flex';
       if(document.getElementById('not-logged-in-msg')) document.getElementById('not-logged-in-msg').style.display='none';
       const initials = (user.email||'?').split('@')[0].substring(0,2).toUpperCase();
       document.getElementById('user-avatar').textContent = initials;
       document.getElementById('user-email-lbl').textContent = user.email;
-      // Now connect to database
       connectDatabase();
     } else {
       // Not logged in — show login screen
       currentUser = null;
       document.getElementById('login-overlay').style.display = 'flex';
+      document.getElementById('main-content').style.display = 'none';
+      document.querySelector('.sidebar').style.display = 'none';
       document.getElementById('user-badge').style.display = 'none';
       if(document.getElementById('not-logged-in-msg')) document.getElementById('not-logged-in-msg').style.display='block';
       document.getElementById('setup-overlay').style.display = 'none';
