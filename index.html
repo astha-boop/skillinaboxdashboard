@@ -1088,21 +1088,20 @@ function connectFirebase(){
         setSyncStatus('saved','Connected!');
         db.ref('skillinabox/data').once('value').then(s=>{
           const existing = s.val();
-          if(existing){
-            // If DB has old hardcoded data (2026-03-02 week), wipe it for fresh start
-            if(existing.userWeeks && existing.userWeeks['2026-03-02']){
-              await db.ref('skillinabox/data').remove();
-              console.log('Old data wiped — fresh start');
-            } else {
-              applyRemoteData(existing);
-            }
+          function finishLoad(){
+            seedDefaultMsgSlots();
+            renderAll();
+            fbListen();
+            setSyncStatus('saved','Live sync on');
+            setTimeout(()=>fbSave(), 1200);
           }
-          const needsSave = seedDefaultMsgSlots();
-          renderAll();
-          fbListen();
-          setSyncStatus('saved','Live sync on');
-          // Always push to Firebase so all screens get latest hardcoded + seeded data
-          setTimeout(()=>fbSave(), 1200);
+          if(existing && existing.userWeeks && existing.userWeeks['2026-03-02']){
+            // Wipe old hardcoded data then start fresh
+            db.ref('skillinabox/data').remove().then(finishLoad);
+          } else {
+            if(existing) applyRemoteData(existing);
+            finishLoad();
+          }
         });
       } else {
         errEl.textContent='Connected to Firebase but database not reachable. Check Database URL.';
