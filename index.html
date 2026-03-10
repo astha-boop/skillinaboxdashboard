@@ -1089,9 +1089,14 @@ function connectFirebase(){
         db.ref('skillinabox/data').once('value').then(s=>{
           const existing = s.val();
           if(existing){
-            applyRemoteData(existing);
+            // If DB has old hardcoded data (2026-03-02 week), wipe it for fresh start
+            if(existing.userWeeks && existing.userWeeks['2026-03-02']){
+              await db.ref('skillinabox/data').remove();
+              console.log('Old data wiped — fresh start');
+            } else {
+              applyRemoteData(existing);
+            }
           }
-          // Seed any default data that may be missing from Firebase
           const needsSave = seedDefaultMsgSlots();
           renderAll();
           fbListen();
@@ -1124,276 +1129,8 @@ let trainers=['Priya','Riya','Ruchi','Nandini','Disha','Ayushi Rai','Shiuli','Pr
 
 // WEEK SCHEDULES keyed by Monday date of each week
 const scheduleByWeek={
-
-// WEEK OF 2 MARCH 2026  historical, from PDF
-'2026-03-02':{
-  Monday:[
-  {id:1,  time:'10:30',learner:'Aasma_June(25)_Skillinabox',         note:'',                trainer:'Disha',      type:'Regular'},
-  {id:2,  time:'11:00',learner:'Ishu Bharti_September25_skillinabox_fashion',note:'Now at 11:30am',trainer:'Bharti',type:'Regular'},
-  {id:3,  time:'11:00',learner:'Renu Bala_(October 25)_skillinabox_fashion',note:'',          trainer:'Sneha',      type:'Regular'},
-  {id:4,  time:'11:30',learner:'Richa_June25_SIB',                   note:'',                trainer:'Jagriti',    type:'Regular'},
-  {id:5,  time:'11:30',learner:'Nusrat_Skillinabox(Sep25)_FD',       note:'',                trainer:'Riya',       type:'Regular'},
-  {id:6,  time:'12:00',learner:'Tamanna_(August 25)_Skillinabox_Fashion',note:'',            trainer:'Disha',      type:'Regular'},
-  {id:7,  time:'12:00',learner:'Vandana_May25_SIB',                  note:'Garment Review',  trainer:'Sanjana',    type:'Garment Review'},
-  {id:8,  time:'12:00',learner:'Aerleen_aug(25)_Skillinabox',        note:'12:45',           trainer:'Priya',      type:'Regular'},
-  {id:9,  time:'12:30',learner:'Pooja Giri_May-25_Skillinabox',      note:'',                trainer:'Sanjana',    type:'Regular'},
-  {id:10, time:'12:30',learner:'Benazir_May(25)_Skillinabox',        note:'',                trainer:'Disha',      type:'Regular'},
-  {id:11, time:'1:00', learner:'Pradnya Dalvi',                       note:'',                trainer:'',           type:'Regular'},
-  {id:12, time:'1:00', learner:'Ritika Malviya_(July 25)_Skillinabox_Fashion',note:'',       trainer:'Jagriti',    type:'Regular'},
-  {id:13, time:'1:00', learner:'Mahek Kansara',                       note:'',                trainer:'Disha',      type:'Regular'},
-  {id:14, time:'1:30', learner:'Manisha_May25_Skillinabox',           note:'',                trainer:'Riya',       type:'Regular'},
-  {id:15, time:'1:30', learner:'Thasreena Ahamed Saheb',              note:'',                trainer:'Jagriti',    type:'Regular'},
-  {id:16, time:'2:45', learner:'anchal singh',                        note:'',                trainer:'Jagriti',    type:'Regular'},
-  {id:17, time:'3:00', learner:'Aliza shaikh-OCT25/NOV25',            note:'',                trainer:'Riya',       type:'Regular'},
-  {id:18, time:'3:00', learner:'Sarika_May(25)_Skillinabox',          note:'Garment Review',  trainer:'',           type:'Garment Review'},
-  {id:19, time:'3:30', learner:'khushi_july25_skillinabox',           note:'',                trainer:'Priya',      type:'Regular'},
-  {id:20, time:'3:30', learner:'Vibhuti Baraiya',                     note:'NC',              trainer:'Sneha',      type:'Regular'},
-  {id:21, time:'3:30', learner:'Pinky choudhary',                     note:'',                trainer:'Jagriti',    type:'Regular'},
-  {id:22, time:'4:00', learner:'Riha_NID_August25_Skillinabox',       note:'',                trainer:'Riya',       type:'Regular'},
-  {id:23, time:'4:00', learner:'Harsha_(October25)_Skillinabox_Fashion',note:'',             trainer:'Bharti',     type:'Regular'},
-  {id:24, time:'4:00', learner:'Shagufta_(August25)_Skillinabox_FD',  note:'',                trainer:'Jagriti',    type:'Regular'},
-  {id:25, time:'4:30', learner:'Shivani-OCT25/NOV25/onbd',            note:'',                trainer:'Bharti',     type:'Regular'},
-  {id:26, time:'4:30', learner:'Pradnya Dalvi',                       note:'',                trainer:'',           type:'Regular'},
-  {id:27, time:'5:00', learner:'Suneha Sharma_(july-25)_Skillinabox', note:'',                trainer:'Riya',       type:'Regular'},
-  {id:28, time:'5:00', learner:'Seema_(Sep 25)_Skillinabox_Fashion',  note:'',                trainer:'Priya',      type:'Regular'},
-  {id:29, time:'5:30', learner:'parul pal',                           note:'',                trainer:'Priya',      type:'Regular'},
-  {id:30, time:'5:30', learner:'Nancy Kathait',                       note:'',                trainer:'Disha',      type:'Regular'},
-  {id:31, time:'6:00', learner:'Lilusmita Pradhan',                   note:'',                trainer:'Riya',       type:'Regular'},
-  {id:32, time:'7:00', learner:'Gulafsha na',                         note:'',                trainer:'Jagriti',    type:'Regular'}
-  ],
-  Tuesday:[
-  {id:100,time:'11:00',learner:'Saloni',                              note:'',                trainer:'Riya',       type:'Regular'},
-  {id:101,time:'11:00',learner:'sonia',                               note:'',                trainer:'Sneha',      type:'Regular'},
-  {id:102,time:'11:30',learner:'Azka Rahman',                         note:'NC',              trainer:'',           type:'Regular'},
-  {id:103,time:'12:00',learner:'Intro Session',                       note:'Done',            trainer:'Disha',      type:'Intro Session'},
-  {id:104,time:'12:00',learner:'Savitha Kumari',                      note:'',                trainer:'Jagriti',    type:'Regular'},
-  {id:105,time:'12:00',learner:'Bhumika',                             note:'',                trainer:'Riya',       type:'Regular'},
-  {id:106,time:'12:30',learner:'Aisha_(October 25)_Skillinabox_Fashion',note:'',             trainer:'Sneha',      type:'Regular'},
-  {id:107,time:'12:30',learner:'Shweta Mehta',                        note:'',                trainer:'Riya',       type:'Regular'},
-  {id:108,time:'1:00', learner:'Riya Rahale',                         note:'',                trainer:'Jagriti',    type:'Regular'},
-  {id:109,time:'1:30', learner:'Gulbahar Saif',                       note:'NC',              trainer:'',           type:'Regular'},
-  {id:110,time:'2:45', learner:'Shamita_Aug(25)_Skillinabox',         note:'',                trainer:'Riya',       type:'Regular'},
-  {id:111,time:'3:00', learner:'Rajnandani Kumari',                   note:'',                trainer:'Sneha',      type:'Regular'},
-  {id:112,time:'3:30', learner:'Pradnya Dalvi',                       note:'',                trainer:'Disha',      type:'Regular'},
-  {id:113,time:'4:00', learner:'Naincy Verma',                        note:'',                trainer:'Jagriti',    type:'Regular'},
-  {id:114,time:'4:00', learner:'Archana_(September25)_Skillinabox_Fashion',note:'',          trainer:'Riya',       type:'Regular'},
-  {id:115,time:'4:00', learner:'Aparna_July25_Skillinabox',           note:'',                trainer:'Sanjana',    type:'Regular'}
-  ],
-  Wednesday:[],
-  Thursday:[
-  {id:200,time:'11:00',learner:'Rekha_(Oct_25)_Skillinabox_fashion',  note:'',                trainer:'Ayushi Rai', type:'Regular'},
-  {id:201,time:'11:00',learner:'Akshita_(Aug_25)_Skillinabox_FD',     note:'',                trainer:'Riya',       type:'Regular'},
-  {id:202,time:'11:30',learner:'Usha_(August25)_Skillinabox_Fashion', note:'',                trainer:'Jagriti',    type:'Regular'},
-  {id:203,time:'11:30',learner:'Mehraz_(August 25)_Skillinabox_FD',   note:'exam related',    trainer:'Priya',      type:'Regular'},
-  {id:204,time:'12:00',learner:'Disha_Jan(25)_Skillinabox',           note:'Garment Review',  trainer:'Sanjana',    type:'Garment Review'},
-  {id:205,time:'12:00',learner:'aljina diwan',                        note:'',                trainer:'Sneha',      type:'Regular'},
-  {id:206,time:'12:00',learner:'Sarita Sahani',                       note:'NC',              trainer:'Priya',      type:'Regular'},
-  {id:207,time:'12:30',learner:'Haya kirmani_(August 25)_Skillinabox_Fashion',note:'',       trainer:'Riya',       type:'Regular'},
-  {id:208,time:'1:00', learner:'Tasneem Siddiquah',                   note:'',                trainer:'Jagriti',    type:'Regular'},
-  {id:209,time:'1:00', learner:'Preeti Kapil_july-25_Skillinabox',    note:'',                trainer:'Sneha',      type:'Regular'},
-  {id:210,time:'1:30', learner:'Parash Moni Basfar',                  note:'',                trainer:'Sneha',      type:'Regular'},
-  {id:211,time:'2:45', learner:'Nida jilani shaikh',                  note:'NC',              trainer:'',           type:'Regular'},
-  {id:212,time:'3:00', learner:'Azka Rahman',                         note:'',                trainer:'',           type:'Regular'},
-  {id:213,time:'3:00', learner:'Nighat_Skillinabox(Aug25)_FD',        note:'',                trainer:'Bharti',     type:'Regular'},
-  {id:214,time:'3:00', learner:'Nitisha_SkillinaboxJuly25',           note:'',                trainer:'',           type:'Regular'},
-  {id:215,time:'3:30', learner:'Ruby_Skillinabox(Aug25)_FD',          note:'',                trainer:'Riya',       type:'Regular'},
-  {id:216,time:'3:30', learner:'Gulbahar Saifi',                      note:'NC',              trainer:'Ruchi',      type:'Regular'},
-  {id:217,time:'4:00', learner:'Shilpa_(April 25)_Skillinabox_Fashion',note:'Garment Review', trainer:'Sanjana',    type:'Garment Review'},
-  {id:218,time:'4:00', learner:'Nikita Vishnu Kshirsagar',            note:'',                trainer:'Shiuli',     type:'Regular'},
-  {id:219,time:'4:00', learner:'Preeti dec cosmo',                    note:'',                trainer:'Ayushi Rai', type:'Regular'},
-  {id:220,time:'4:30', learner:'Afreen_(Oct_25)_Skillinabox_Fashion', note:'',                trainer:'Jagriti',    type:'Regular'},
-  {id:221,time:'4:30', learner:'Jasleen_July(25)_Skillinabox',        note:'NC',              trainer:'Shiuli',     type:'Regular'},
-  {id:222,time:'4:30', learner:'Azka Rahman',                         note:'',                trainer:'Priya',      type:'Regular'},
-  {id:223,time:'5:00', learner:'Komal asheesh',                       note:'',                trainer:'Shiuli',     type:'Regular'},
-  {id:224,time:'5:00', learner:'Pooja_Sept_skillinabox',              note:'website',         trainer:'Ruchi',      type:'Regular'},
-  {id:225,time:'5:00', learner:'Sneha Mishra',                        note:'',                trainer:'',           type:'Regular'},
-  {id:226,time:'5:30', learner:'Shalu_Skillinabox(Oct25)_FD',         note:'NC',              trainer:'Jagriti',    type:'Regular'},
-  {id:227,time:'5:30', learner:'Preeti Nishad',                       note:'NC',              trainer:'',           type:'Regular'},
-  {id:228,time:'6:00', learner:'Lilusmita Pradhan',                   note:'Mood Board',      trainer:'Jagriti',    type:'Mood Board'},
-  {id:229,time:'6:00', learner:'Shivani_May 25_Skillinabox',          note:'',                trainer:'Ruchi',      type:'Regular'},
-  {id:230,time:'6:30', learner:'Ashwini vishnu Jadhav',               note:'',                trainer:'Priya',      type:'Regular'}
-  ],
-  Friday:[
-  {id:300,time:'11:00',learner:'Nitisha_SkillinaboxJuly25',           note:'',                trainer:'Ruchi',      type:'Regular'},
-  {id:301,time:'11:30',learner:'Anindita Sikdar',                     note:'',                trainer:'Priya',      type:'Regular'},
-  {id:302,time:'12:00',learner:'Asha Mehra',                          note:'',                trainer:'Disha',      type:'Regular'},
-  {id:303,time:'12:00',learner:'Gursewak_june25',                     note:'',                trainer:'Ruchi',      type:'Regular'},
-  {id:304,time:'12:00',learner:'Rani Harpreet',                       note:'',                trainer:'Jagriti',    type:'Regular'},
-  {id:305,time:'1:00', learner:'manisha khatoon',                     note:'',                trainer:'Shiuli',     type:'Regular'},
-  {id:306,time:'1:30', learner:'Pinky Sharma',                        note:'',                trainer:'Priya',      type:'Regular'},
-  {id:307,time:'2:45', learner:'Nida jilani shaikh',                  note:'',                trainer:'Jagriti',    type:'Regular'},
-  {id:308,time:'3:00', learner:'Susmita Rabidas_(June 2025)_Skillinabox_fashion',note:'',    trainer:'Ruchi',      type:'Regular'},
-  {id:309,time:'3:00', learner:'Krishna(August25)-Skillinabox',       note:'',                trainer:'Shiuli',     type:'Regular'},
-  {id:310,time:'3:00', learner:'vishveshvari oct',                    note:'',                trainer:'Jagriti',    type:'Regular'},
-  {id:311,time:'3:30', learner:'Sadiya Hasan',                        note:'',                trainer:'Disha',      type:'Regular'},
-  {id:312,time:'3:30', learner:'Nima Lucky Sherpa',                   note:'',                trainer:'Priya',      type:'Regular'},
-  {id:313,time:'4:00', learner:'Mayank Shaw',                         note:'',                trainer:'Ayushi Rai', type:'Regular'},
-  {id:314,time:'4:00', learner:'Visha Siddiqui',                      note:'',                trainer:'Jagriti',    type:'Regular'},
-  {id:315,time:'4:00', learner:'Bharti Chauhan',                      note:'',                trainer:'Ruchi',      type:'Regular'},
-  {id:316,time:'4:30', learner:'Naincy Verma',                        note:'',                trainer:'Akansha',    type:'Regular'},
-  {id:317,time:'4:30', learner:'Alshifa_Apr25',                       note:'NC',              trainer:'',           type:'Regular'},
-  {id:318,time:'4:30', learner:'Teena karn',                          note:'',                trainer:'Shiuli',     type:'Regular'},
-  {id:319,time:'5:00', learner:'Sneha Mishra',                        note:'',                trainer:'Ruchi',      type:'Regular'},
-  {id:320,time:'5:00', learner:'Intro Session',                       note:'',                trainer:'Priya',      type:'Intro Session'},
-  {id:321,time:'5:00', learner:'Preeti Nishad',                       note:'',                trainer:'Jagriti',    type:'Regular'},
-  {id:322,time:'5:00', learner:'Ruby_Skillinabox(Aug25)_FD',          note:'',                trainer:'Ayushi Rai', type:'Regular'},
-  {id:323,time:'5:30', learner:'Archana july25',                      note:'',                trainer:'Shiuli',     type:'Regular'},
-  {id:324,time:'6:00', learner:'Ila_(MAY25)_Skillinabox_FD',          note:'',                trainer:'Disha',      type:'Regular'},
-  {id:325,time:'6:30', learner:'Khushi - Aug 25 - SkillInABox - FD',  note:'',                trainer:'Shiuli',     type:'Regular'},
-  {id:326,time:'7:00', learner:'Anisha_(September25)_Skillinabox_Fashion',note:'',           trainer:'Priya',      type:'Regular'}
-  ],
-  Saturday:[
-  {id:400,time:'10:30',learner:'Manisha_(Aug_25)_Skillinabox_Fashion',note:'',               trainer:'Disha',      type:'Regular'},
-  {id:401,time:'11:00',learner:'Mala Sahu',                           note:'',                trainer:'Priya',      type:'Regular'},
-  {id:402,time:'11:00',learner:'Naincy Verma',                        note:'',                trainer:'Akansha',    type:'Regular'},
-  {id:403,time:'11:30',learner:'rekha oct 25',                        note:'',                trainer:'Ayushi Rai', type:'Regular'},
-  {id:404,time:'12:00',learner:'Mamata Satapathy_(Aug.-25)_Skillinabox',note:'',             trainer:'Shiuli',     type:'Regular'},
-  {id:405,time:'12:00',learner:'Sujal_(March 25)-Port-Till 10th Feb26',note:'',              trainer:'Priya',      type:'Regular'},
-  {id:406,time:'12:00',learner:'mahi oct 2025',                       note:'',                trainer:'Jagriti',    type:'Regular'},
-  {id:407,time:'12:30',learner:'Yashvi Bhalla',                       note:'',                trainer:'Ayushi Rai', type:'Regular'},
-  {id:408,time:'1:00', learner:'Manshi Negi',                         note:'',                trainer:'Disha',      type:'Regular'},
-  {id:409,time:'1:00', learner:'sarita sahani',                       note:'',                trainer:'Priya',      type:'Regular'},
-  {id:410,time:'1:30', learner:'Ritambhara_(June 25)_Skillinabox_Fashion',note:'',           trainer:'Shiuli',     type:'Regular'},
-  {id:411,time:'2:45', learner:'Farha javed',                         note:'',                trainer:'Shiuli',     type:'Regular'},
-  {id:412,time:'3:00', learner:'Vandna tuteja_(August 25)_Skillinabox_fashion',note:'',      trainer:'Disha',      type:'Regular'},
-  {id:413,time:'3:00', learner:'Bhawna_(August 25)_Skillinabox_FD',   note:'',                trainer:'Priya',      type:'Regular'},
-  {id:414,time:'3:30', learner:'Sangeeta(MARCH25)',                   note:'',                trainer:'Shiuli',     type:'Regular'},
-  {id:415,time:'3:30', learner:'Meenakshi_June25_Skillinabox',        note:'',                trainer:'Disha',      type:'Regular'},
-  {id:416,time:'4:00', learner:'Aarti Singh',                         note:'',                trainer:'Disha',      type:'Regular'},
-  {id:417,time:'4:30', learner:'Shivani-OCT25/NOV25/onbd',            note:'',                trainer:'Shiuli',     type:'Regular'},
-  {id:418,time:'4:30', learner:'Monika Tomar',                        note:'',                trainer:'Ayushi Rai', type:'Regular'},
-  {id:419,time:'5:00', learner:'NC',                                  note:'',                trainer:'',           type:'Regular'},
-  {id:420,time:'5:30', learner:'Soni dangi',                          note:'',                trainer:'Disha',      type:'Regular'},
-  {id:421,time:'6:00', learner:'rukhsar Bano',                        note:'',                trainer:'Ruchi',      type:'Regular'},
-  {id:422,time:'6:30', learner:'Chahat Chauhan',                      note:'',                trainer:'',           type:'Regular'},
-  {id:423,time:'6:30', learner:'suman september 25',                  note:'',                trainer:'Jagriti',    type:'Regular'}
-  ]
-},
-
-// WEEK OF 9 MARCH 2026  current week, attendance blank
-'2026-03-09':{
-  Monday:[
-  {id:500,time:'10:30',learner:'Farheen Banu',                        note:'',                trainer:'Ayushi Rai', type:'Regular'},
-  {id:501,time:'11:00',learner:'Pooja_(August25)_Skillinabox_Fashion',note:'',               trainer:'Jagriti',    type:'Regular'},
-  {id:502,time:'11:00',learner:'neetu_(september 25)',                note:'',                trainer:'Disha',      type:'Regular'},
-  {id:503,time:'11:00',learner:'Sarika_May(25)_Skillinabox',          note:'Garment Review',  trainer:'Riya',       type:'Garment Review'},
-  {id:504,time:'11:30',learner:'Ishu Bharti_September25_skillinabox_fashion',note:'',        trainer:'',           type:'Regular'},
-  {id:505,time:'11:30',learner:'Priya Rawat',                         note:'',                trainer:'Jagriti',    type:'Regular'},
-  {id:506,time:'11:30',learner:'Sangeeta(MAR25)',                     note:'Garment Review',  trainer:'Priya',      type:'Garment Review'},
-  {id:507,time:'12:00',learner:'reena september 2025',                note:'',                trainer:'Shiuli',     type:'Regular'},
-  {id:508,time:'12:00',learner:'KAJAL_(July_25)_Skillinabox_25',      note:'',                trainer:'Ayushi Rai', type:'Regular'},
-  {id:509,time:'12:00',learner:'Sadiya Hasan',                        note:'',                trainer:'Jagriti',    type:'Regular'},
-  {id:510,time:'12:30',learner:'Pinki_July(25)_Skillinabox',          note:'',                trainer:'Ruchi',      type:'Regular'},
-  {id:511,time:'12:30',learner:'Sujal_(March 25) Garment Review',     note:'Garment Review',  trainer:'Ayushi Rai', type:'Garment Review'},
-  {id:512,time:'1:00', learner:'Chitra_Aug-2025_SIB',                 note:'',                trainer:'Priya',      type:'Regular'},
-  {id:513,time:'1:00', learner:'Shweta_(October25)_SkillinaBox_Fashion',note:'',             trainer:'',           type:'Regular'},
-  {id:514,time:'1:00', learner:'Taskeen leyaquat',                    note:'',                trainer:'Jagriti',    type:'Regular'},
-  {id:515,time:'1:30', learner:'Kinjal Rawal',                        note:'',                trainer:'',           type:'Regular'},
-  {id:516,time:'1:30', learner:'VANDANA_(October25)_SkillinaBox_Fashion',note:'',            trainer:'Disha',      type:'Regular'},
-  {id:517,time:'2:45', learner:'Deepika_Oct25_Skillinabox',           note:'NC',              trainer:'Shiuli',     type:'Regular'},
-  {id:518,time:'3:00', learner:'Renu Kumari',                         note:'',                trainer:'Akansha',    type:'Regular'},
-  {id:519,time:'3:00', learner:'Suman_March(25)_Skillinabox',         note:'Garment Review',  trainer:'Priya',      type:'Garment Review'},
-  {id:520,time:'3:00', learner:'Bharti Bhati',                        note:'3-3:30',          trainer:'Ayushi Rai', type:'Regular'},
-  {id:521,time:'3:00', learner:'Vaishali thakkar',                    note:'Suspended - EMI needed',trainer:'Disha',type:'Regular'},
-  {id:522,time:'3:30', learner:'Krishna Jain_(May25)_Skillinabox_Fashion',note:'',           trainer:'Sneha',      type:'Regular'},
-  {id:523,time:'3:30', learner:'Nima Lucky Sherpa',                   note:'',                trainer:'Ruchi',      type:'Regular'},
-  {id:524,time:'4:00', learner:'Kanchan Yadav',                       note:'',                trainer:'Priya',      type:'Regular'},
-  {id:525,time:'4:00', learner:'Rajnandani kumar',                    note:'',                trainer:'Jagriti',    type:'Regular'},
-  {id:526,time:'4:00', learner:'Shagufta_(August25)_Skillinabox_FD',  note:'',                trainer:'Ruchi',      type:'Regular'},
-  {id:527,time:'4:30', learner:'SHUCHI BALA',                         note:'',                trainer:'Shiuli',     type:'Regular'},
-  {id:528,time:'4:30', learner:'alshifa_april25',                     note:'',                trainer:'Disha',      type:'Regular'},
-  {id:529,time:'4:30', learner:'Manshi Negi',                         note:'',                trainer:'',           type:'Regular'},
-  {id:530,time:'5:00', learner:'Riha_NID_August25_Skillinabox',       note:'',                trainer:'Riya',       type:'Regular'},
-  {id:531,time:'5:00', learner:'Khushi NID intro',                    note:"Don't send the link",trainer:'Shiuli',  type:'Intro Session'},
-  {id:532,time:'5:00', learner:'Sonia NA',                            note:'',                trainer:'Disha',      type:'Regular'},
-  {id:533,time:'5:30', learner:'Pinky choudhary',                     note:'',                trainer:'Jagriti',    type:'Regular'},
-  {id:534,time:'5:30', learner:'Purvi Upadhaya_(August 25)_Skillinabox_Fashion',note:'',     trainer:'Sneha',      type:'Regular'},
-  {id:535,time:'6:30', learner:'Gulafsha na',                         note:'',                trainer:'Ayushi Rai', type:'Regular'},
-  {id:536,time:'7:00', learner:'Rachna Kosta',                        note:'',                trainer:'Riya',       type:'Regular'}
-  ],
-
-  Tuesday:[
-  {id:600,time:'10:30',learner:'Chitra_Aug-2025_SIB',                          note:'',                trainer:'Shiuli',       type:'Regular'},
-  {id:601,time:'11:00',learner:'Ishu Bharti_September25_skillinabox_fashion',   note:'',                trainer:'Bharti',       type:'Regular'},
-  {id:602,time:'11:00',learner:'Sahishnuta_(Sept_25)_Skillinabox_FD',           note:'',                trainer:'Jagriti',      type:'Regular'},
-  {id:603,time:'11:00',learner:'Shabana Bee',                                   note:'',                trainer:'Riya',         type:'Regular'},
-  {id:604,time:'12:00',learner:'EXAM MEETING',                                  note:'',                trainer:'Priya',        type:'Exam Meeting'},
-  {id:605,time:'12:00',learner:'Pinki kumari double trouble',                   note:'',                trainer:'',             type:'Double Trouble'},
-  {id:606,time:'12:30',learner:'PRIETY (6-AUGUST-2025) SKILLINABOX',            note:'pattern',         trainer:'Bharti',       type:'Regular'},
-  {id:607,time:'12:30',learner:'Priyanka tiwari_(September 25)_Skillinabox_Fashion',note:'',            trainer:'Jagriti',      type:'Regular'},
-  {id:608,time:'1:00', learner:'Honey Mukeshbhai',                              note:'',                trainer:'Riya',         type:'Regular'},
-  {id:609,time:'1:00', learner:'Nitu_June(25)_Skillinabox',                     note:'',                trainer:'Jagriti',      type:'Regular'},
-  {id:610,time:'1:00', learner:'Gargi Pravin Dafre',                            note:'',                trainer:'Shiuli',       type:'Regular'},
-  {id:611,time:'1:30', learner:'Deepshikha Thakur',                             note:'',                trainer:'Ruchi',        type:'Regular'},
-  {id:612,time:'1:30', learner:'Pinki kumari',                                  note:'',                trainer:'Shiuli',       type:'Regular'},
-  {id:613,time:'3:00', learner:'Saniya Singh_(May)_Skillinabox_Fashion',        note:'',                trainer:'Riya',         type:'Regular'},
-  {id:614,time:'3:00', learner:'Dhanashri Prshant Jadhav',                      note:'',                trainer:'Priya',        type:'Regular'},
-  {id:615,time:'3:00', learner:'Shweta Mehta',                                  note:'',                trainer:'Ayushi Rai',   type:'Regular'},
-  {id:616,time:'3:30', learner:'Neetu_(August 25)_Skillinabox_Fashion',         note:'',                trainer:'Shiuli',       type:'Regular'},
-  {id:617,time:'3:30', learner:'Mahreen Khan',                                  note:'',                trainer:'Priyanjali',   type:'Regular'},
-  {id:618,time:'3:30', learner:'Parash Moni Basfar',                            note:'',                trainer:'Akansha',      type:'Regular'},
-  {id:619,time:'4:00', learner:'Muskan_Sept25_Skillinabox',                     note:'LMS-9/09/26',     trainer:'Priya',        type:'Regular'},
-  {id:620,time:'4:00', learner:'Preeti_Dec25 Cosmo',                            note:'',                trainer:'Ayushi Rai',   type:'Regular'},
-  {id:621,time:'4:00', learner:'Khushboo_Skillinabox(June25)_FD',               note:'',                trainer:'Jagriti',      type:'Regular'},
-  {id:622,time:'4:30', learner:'Mahima Chaurasiya',                             note:'',                trainer:'Akansha',      type:'Regular'},
-  {id:623,time:'4:30', learner:'Aarti kher',                                    note:'',                trainer:'Shiuli',       type:'Regular'},
-  {id:624,time:'4:30', learner:'Mahvish Fatima',                                note:'',                trainer:'Priyanjali',   type:'Regular'},
-  {id:625,time:'5:00', learner:'Khushi NID intro',                              note:'',                trainer:'Shiuli',       type:'Intro Session'},
-  {id:626,time:'5:00', learner:'Vinita_(JAN25)',                                note:'Garment Review',  trainer:'Sanjana',      type:'Garment Review'},
-  {id:627,time:'5:30', learner:'Monika Tomar Pattern making',                   note:'',                trainer:'Priya',        type:'Regular'},
-  {id:628,time:'7:00', learner:'Saloni_(September-2025)_skillinabox_Fashion',   note:'',                trainer:'Ruchi',        type:'Regular'}
-  ],
-  Wednesday:[
-  {id:700,time:'10:30',learner:'Sonali_(Oct 2025)_Sib_Fashion',                 note:'NC',              trainer:'',             type:'Regular'},
-  {id:701,time:'11:00',learner:'Rekha Mittal',                                  note:'',                trainer:'',             type:'Regular'},
-  {id:702,time:'11:00',learner:'patel vidhi amrutbhai',                         note:'',                trainer:'',             type:'Regular'},
-  {id:703,time:'11:00',learner:'Shivani Singh',                                 note:'',                trainer:'',             type:'Regular'},
-  {id:704,time:'11:30',learner:'punam_may25',                                   note:'Exam-Ex-13th Feb26',trainer:'',           type:'Regular'},
-  {id:705,time:'12:00',learner:'Vishveshvari-OCT25/NOV25/ONBD',                 note:'',                trainer:'',             type:'Regular'},
-  {id:706,time:'12:00',learner:'Zohra Jabeen',                                  note:'will join at 12:15',trainer:'',           type:'Regular'},
-  {id:707,time:'1:00', learner:'Neetu_Skillinabox(July25)_fd',                  note:'',                trainer:'',             type:'Regular'},
-  {id:708,time:'1:00', learner:'Divyanshi_Apr25',                               note:'Garment Review',  trainer:'',             type:'Garment Review'},
-  {id:709,time:'1:30', learner:'Yogeshwari Durga Jagata',                       note:'',                trainer:'',             type:'Regular'},
-  {id:710,time:'2:45', learner:'Mohini Chaudhary',                              note:'NC',              trainer:'',             type:'Regular'},
-  {id:711,time:'3:00', learner:'Payal Ahir Dangar',                             note:'',                trainer:'',             type:'Regular'},
-  {id:712,time:'4:00', learner:'Aparna_July25_Skillinabox',                     note:'',                trainer:'',             type:'Regular'},
-  {id:713,time:'4:00', learner:'MOOD BOARD MEETING',                            note:'',                trainer:'',             type:'Mood Board'},
-  {id:714,time:'4:00', learner:'Pooja Kaur',                                    note:'',                trainer:'',             type:'Regular'},
-  {id:715,time:'5:00', learner:'Anushka Ranjan',                                note:'',                trainer:'',             type:'Regular'},
-  {id:716,time:'6:00', learner:'Tanu-Apr 25/upgraded NID',                      note:'',                trainer:'',             type:'Regular'},
-  {id:717,time:'6:00', learner:'Roshan Pradhan',                                note:'',                trainer:'',             type:'Regular'},
-  {id:718,time:'6:00', learner:'Jyoti Upadhyay',                                note:'NC',              trainer:'',             type:'Regular'}
-  ],
-  Thursday:[
-  {id:800,time:'6:30', learner:'Dipmoni_(Sept 25)_Skillinabox_Fashion',         note:'NC',              trainer:'',             type:'Regular'}
-  ],
-  Friday:[
-  {id:900,time:'4:30', learner:'Urvashi Ahir',                                  note:'',                trainer:'',             type:'Regular'}
-  ],
-  Saturday:[
-  {id:1000,time:'11:00',learner:'Tanya_SIB(August)2025',                        note:'',                trainer:'',             type:'Regular'},
-  {id:1001,time:'11:00',learner:'Heena_Oct(25)_Skillinabox',                    note:'',                trainer:'',             type:'Regular'},
-  {id:1002,time:'5:00', learner:'Suneha Sharma_(july-25)_Skillinabox',          note:'',                trainer:'',             type:'Regular'}
-  ]
-}
-
-,
-
-'2026-03-16':{
-  Monday:[
-  {id:1100,time:'3:00', learner:'Garima_May 25_SIB',                            note:'',                trainer:'',             type:'Regular'},
-  {id:1101,time:'4:30', learner:'Alshifa_Apr25',                                note:'',                trainer:'Disha',        type:'Regular'}
-  ],
-  Tuesday:[],
-  Wednesday:[],
-  Thursday:[],
-  Friday:[],
-  Saturday:[]
-}
-
+// Weeks are created automatically when trainers navigate to them
 };
-
-// Active schedule - always points to the right week
 let schedule=scheduleByWeek['2026-03-09'];
 
 
@@ -2397,15 +2134,6 @@ const TASK_CATEGORIES=[
 let taskId=0;
 let taskFilter='all';
 
-// Seed some sample tasks matching the screenshot
-getWeekStore('2026-03-02').tasks.training=[
-  {id:'t'+(++taskId),name:'Capsule',assign:'',date:'2026-02-28',status:'pending',delay:''},
-  {id:'t'+(++taskId),name:'Offline Session',assign:'',date:'2026-02-28',status:'pending',delay:''},
-  {id:'t'+(++taskId),name:'LMS Shoot',assign:'Sneha',date:'2026-02-28',status:'pending',delay:''},
-  {id:'t'+(++taskId),name:'LMS Audit',assign:'Lms Auditing - Ruchi Dist',date:'2026-02-28',status:'pending',delay:''},
-  {id:'t'+(++taskId),name:'Portfolio Shoot',assign:'Vidhi',date:'2026-02-28',status:'pending',delay:''},
-  {id:'t'+(++taskId),name:'Additional Meetings',assign:'Product Training - Ruchi',date:'2026-02-28',status:'pending',delay:''},
-];
 
 function setTaskFilter(f,btn){
   taskFilter=f;
@@ -2627,34 +2355,7 @@ currentMsgDay=defaultDay;
 document.querySelectorAll('#tab-schedule .day-btn').forEach((b,i)=>b.classList.toggle('active',DAYS[i]===defaultDay));
 document.querySelectorAll('#tab-messages .day-btn').forEach((b,i)=>b.classList.toggle('active',DAYS[i]===defaultDay));
 
-// Seed historical att from week of 2 March PDF data into weekData
-(function seedHistoricalData(){
-  const histKey='2026-03-02';
-  const histAtt={
-    1:'P',2:'P',3:'P',4:'P',5:'P',6:'A',7:'P',8:'',9:'P',10:'P',
-    11:'',12:'P',13:'A',14:'P',15:'A',16:'P',17:'P',18:'',19:'P',
-    20:'NC',21:'P',22:'P',23:'P',24:'P',25:'P',26:'',27:'P',28:'P',
-    29:'P',30:'P',31:'A',32:'P',
-    100:'A',101:'P',102:'NC',103:'P',104:'P',105:'P',106:'P',107:'P',
-    108:'A',109:'NC',110:'P',111:'A',112:'P',113:'P',114:'A',115:'P',
-    200:'',201:'P',202:'P',203:'P',204:'P',205:'P',206:'A',207:'P',
-    208:'P',209:'P',210:'P',211:'NC',212:'',213:'P',214:'',215:'A',
-    216:'P',217:'P',218:'A',219:'',220:'P',221:'P',222:'P',223:'P',
-    224:'',225:'',226:'P',227:'NC',228:'P',229:'',230:'P',
-    300:'P',301:'P',302:'A',303:'P',304:'P',305:'P',306:'P',307:'P',
-    308:'P',309:'P',310:'P',311:'P',312:'P',313:'P',314:'P',315:'P',
-    316:'A',317:'NC',318:'P',319:'P',320:'P',321:'P',322:'',323:'P',
-    324:'P',325:'P',326:'P',
-    400:'P',401:'P',402:'P',403:'P',404:'P',405:'P',406:'P',407:'P',
-    408:'',409:'P',410:'P',411:'P',412:'P',413:'A',414:'P',415:'P',
-    416:'',417:'P',418:'P',419:'NC',420:'P',421:'',422:'',423:'P'
-  };
-  if(!allWeekData[histKey]) getWeekStore(histKey);
-  const ad=allWeekData[histKey].attData;
-  Object.entries(histAtt).forEach(([id,att])=>{
-    ad[parseInt(id)]={att:att,note:''};
-  });
-})();
+
 // Seed message slots for week of 9 March (and 2 March) from PDF data
 // DO NOT render here — wait for Firebase to load data first
 // renderAll() is called by connectFirebase() after data is fetched
@@ -2669,33 +2370,7 @@ function renderAll(){
   renderTaskSections();
 }
 
-// Called after Firebase data is applied — seeds default msg slots if still empty
-function seedDefaultMsgSlots(){
-  const wk = '2026-03-09';
-  getWeekStore(wk);
-  const msgSlots = allWeekData[wk].msgSlots;
-
-  if(!msgSlots.Tuesday || msgSlots.Tuesday.length===0){
-    msgSlots.Tuesday = [];
-    [
-      {from:'7:30pm',to:'12am',   trainers:['Riya','Bharti','Priyanjali']},
-      {from:'12am',  to:'11am',   trainers:['Sneha']},
-      {from:'11am',  to:'12pm',   trainers:['Priya']},
-      {from:'12pm',  to:'1pm',    trainers:['Ruchi']},
-      {from:'1pm',   to:'2pm',    trainers:['Bharti']},
-      {from:'2pm',   to:'3pm',    trainers:['Shiuli']},
-      {from:'3pm',   to:'4pm',    trainers:['Jagriti']},
-      {from:'4pm',   to:'5pm',    trainers:['Akansha']},
-      {from:'5pm',   to:'6pm',    trainers:['Ayushi Rai']},
-      {from:'6pm',   to:'7pm',    trainers:['Riya']},
-      {from:'7pm',   to:'7:30pm', trainers:['Priya','Jagriti']},
-    ].forEach(s=>{
-      msgSlots.Tuesday.push({id:'ms'+(++msgId),from:s.from,to:s.to,trainers:s.trainers,trainer:s.trainers[0]||'',notes:''});
-    });
-    return true; // data was seeded, needs saving
-  }
-  return false;
-}
+function seedDefaultMsgSlots(){ return false; }
 
 // ═══════════════════════════════════════════════════════════
 // FIREBASE AUTHENTICATION
