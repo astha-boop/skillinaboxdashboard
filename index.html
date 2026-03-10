@@ -509,6 +509,19 @@ tr:hover td{background:rgba(41,171,226,0.03);}
       <button class="add-t-btn" onclick="addTrainer()">+</button>
     </div>
   </div>
+  <!-- USER + LOGOUT at bottom of sidebar -->
+  <div style="margin-top:auto;padding-top:1rem;border-top:1px solid #1e3a6e;">
+    <div id="user-badge" style="display:none;flex-direction:column;gap:0.5rem;">
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        <div class="user-avatar" id="user-avatar" style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#29ABE2,#F26522);display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#fff;flex-shrink:0;"></div>
+        <span id="user-email-lbl" style="font-size:0.68rem;color:#9EA3A8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;"></span>
+      </div>
+      <button id="logout-btn" onclick="doLogout()" style="width:100%;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:6px;color:#ef4444;font-size:0.72rem;padding:0.4rem;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.background='rgba(239,68,68,0.18)'" onmouseout="this.style.background='rgba(239,68,68,0.08)'">
+        🚪 Sign Out
+      </button>
+    </div>
+    <div id="not-logged-in-msg" style="font-size:0.65rem;color:#3a5888;text-align:center;">Not signed in</div>
+  </div>
 </aside>
 
 <!-- MAIN -->
@@ -534,6 +547,10 @@ tr:hover td{background:rgba(41,171,226,0.03);}
       <div style="font-size:0.73rem;color:var(--muted);margin-top:0.25rem" id="cur-date"></div>
     </div>
     <div class="top-actions">
+      <div id="sync-status-inline" style="font-size:0.68rem;color:#9EA3A8;display:flex;align-items:center;gap:0.35rem;">
+        <span id="sync-dot" style="width:7px;height:7px;border-radius:50%;background:#22c55e;flex-shrink:0;display:inline-block;"></span>
+        <span id="sync-text">Connecting…</span>
+      </div>
       <button class="btn" onclick="exportCSV()">⬇ Export</button>
       <button class="btn btn-primary" onclick="flashSave()">✓ Save All</button>
     </div>
@@ -2694,7 +2711,8 @@ function initAuth(firebaseApp){
       currentUser = user;
       document.getElementById('login-overlay').style.display = 'none';
       document.getElementById('user-badge').style.display = 'flex';
-      const initials = (user.email||'?').substring(0,2).toUpperCase();
+      if(document.getElementById('not-logged-in-msg')) document.getElementById('not-logged-in-msg').style.display='none';
+      const initials = (user.email||'?').split('@')[0].substring(0,2).toUpperCase();
       document.getElementById('user-avatar').textContent = initials;
       document.getElementById('user-email-lbl').textContent = user.email;
       // Now connect to database
@@ -2704,6 +2722,7 @@ function initAuth(firebaseApp){
       currentUser = null;
       document.getElementById('login-overlay').style.display = 'flex';
       document.getElementById('user-badge').style.display = 'none';
+      if(document.getElementById('not-logged-in-msg')) document.getElementById('not-logged-in-msg').style.display='block';
       document.getElementById('setup-overlay').style.display = 'none';
     }
   });
