@@ -927,7 +927,10 @@ tr:hover td{background:rgba(41,171,226,0.03);}
     </div>
     <div class="notes-list" id="notes-list"></div>
     <div class="note-input-row">
-      <select id="note-trainer-sel"><option value="">Trainer…</option></select>
+      <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;width:130px;justify-content:center;">
+        <span style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);">Adding as</span>
+        <span id="note-author-lbl" style="font-size:0.72rem;color:var(--sib-blue);font-weight:600;word-break:break-all;"></span>
+      </div>
       <textarea id="note-text" placeholder="Add a note about this learner's behaviour, progress, or feedback…"></textarea>
       <button class="note-add-btn" onclick="addNote()">Add</button>
     </div>
@@ -974,6 +977,7 @@ function fbSave(){
       msgId:       msgId,
       trackerId:   trackerId,
       taskId:      taskId,
+      deletedSlotIds: [...deletedSlotIds],
     };
     _isSaving = true;
     db.ref('skillinabox/data').set(payload)
@@ -1005,13 +1009,20 @@ function deepMerge(target, source){
 function applyRemoteData(data){
   if(!data) return;
   if(data.trainers) trainers = data.trainers;
+  // Restore deleted IDs list first so merge below can honour it
+  if(data.deletedSlotIds) data.deletedSlotIds.forEach(id=>deletedSlotIds.add(id));
   // Merge user-created weeks — for each week, merge each day's sessions
   // by ID so hardcoded sessions are never lost and Firebase-added ones are kept
   if(data.userWeeks){
     Object.keys(data.userWeeks).forEach(wk=>{
       const remoteWeek = data.userWeeks[wk];
       if(!scheduleByWeek[wk]){
-        scheduleByWeek[wk] = remoteWeek;
+        // Filter out any deleted slots before adopting the week
+        const filtered = {};
+        DAYS.forEach(day=>{
+          filtered[day] = (remoteWeek[day]||[]).filter(s=>!deletedSlotIds.has(s.id));
+        });
+        scheduleByWeek[wk] = filtered;
         return;
       }
       // Merge day by day
@@ -1020,21 +1031,26 @@ function applyRemoteData(data){
         const remote = (remoteWeek[day]) || [];
         // Build map of existing IDs from hardcoded data
         const localIds = new Set(local.map(s=>s.id));
-        // Add remote sessions that aren't already in local (user-added slots)
+        // Add remote sessions that aren't already in local and weren't deleted
         remote.forEach(rs=>{
-          if(!localIds.has(rs.id)) local.push(rs);
-          else {
+          if(deletedSlotIds.has(rs.id)) return; // never re-add deleted slots
+          if(!localIds.has(rs.id)){
+            local.push(rs);
+          } else {
             // Update fields that users may have changed (trainer, note, type, learner name)
             const ls = local.find(s=>s.id===rs.id);
             if(ls){
-              if(rs.trainer !== undefined) ls.trainer = rs.trainer;
-              if(rs.note    !== undefined) ls.note    = rs.note;
-              if(rs.type    !== undefined) ls.type    = rs.type;
-              if(rs.learner !== undefined) ls.learner = rs.learner;
+              if(rs.trainer    !== undefined) ls.trainer    = rs.trainer;
+              if(rs.note       !== undefined) ls.note       = rs.note;
+              if(rs.type       !== undefined) ls.type       = rs.type;
+              if(rs.learner    !== undefined) ls.learner    = rs.learner;
+              if(rs.addedBy    !== undefined) ls.addedBy    = rs.addedBy;
+              if(rs.coTrainer  !== undefined) ls.coTrainer  = rs.coTrainer;
             }
           }
         });
-        scheduleByWeek[wk][day] = local;
+        // Also remove any locally-present slots that have since been deleted
+        scheduleByWeek[wk][day] = local.filter(s=>!deletedSlotIds.has(s.id));
       });
     });
   }
@@ -1187,6 +1203,8 @@ let currentDay='Monday', currentMsgDay='Monday', activeNoteId=null;
 // slotId set below
 let slotId=1101, msgId=200, trackerId=100;
 let addFormOpen=false;
+// Track deleted slot IDs so Firebase live-listener never re-adds them
+let deletedSlotIds = new Set();
 
 // --- UTILS ---------------------------------------------------------------
 function x(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
@@ -1266,7 +1284,7 @@ function syncAllDropdowns(){
   // msg slot trainer
   const mst=document.getElementById('ms-trainer'); if(mst)mst.innerHTML=withEmpty;
   // notes modal trainer
-  const nts=document.getElementById('note-trainer-sel'); if(nts)nts.innerHTML='<option value="">Trainer</option>'+base;
+  // note-trainer-sel removed — notes now auto-capture logged-in user email
 }
 
 // --- TAB SWITCHING --------------------------------------------------------
@@ -1348,6 +1366,7 @@ function renderSchedule(){
           '<div style="display:flex;flex-direction:column;gap:3px">'+
             '<input class="si" value="'+x(s.learner)+'" placeholder="Learner name" style="font-weight:500" onchange="upSlot('+s.id+",'learner'"+ ',this.value)">'+
             '<input class="si" value="'+x(wd.note||'')+'" placeholder="Session note" style="font-size:0.68rem;color:var(--muted)" onchange="upWeekNote('+s.id+',this.value)">'+
+            (s.addedBy?'<span style="font-size:0.6rem;color:var(--sib-blue);opacity:0.7;margin-top:1px">➕ '+x(s.addedBy.split('@')[0])+'</span>':'')+
           '</div>'+
           '<select class="sel" onchange="upSlot('+s.id+",'trainer'"+ ',this.value)">'+
             '<option value=""> Trainer </option>'+
@@ -1433,7 +1452,16 @@ function getSlotsForLearner(trackerName){
   });
   return ids;
 }
-function delSlot(id){if(!confirm('Remove this session?'))return;const wk=scheduleByWeek[currentWeekKey];if(!wk)return;for(const d of DAYS){wk[d]=(wk[d]||[]).filter(s=>s.id!==id);}schedule=wk;fbSave();renderSchedule();}
+function delSlot(id){
+  if(!confirm('Remove this session?'))return;
+  const wk=scheduleByWeek[currentWeekKey];
+  if(!wk)return;
+  for(const d of DAYS){wk[d]=(wk[d]||[]).filter(s=>s.id!==id);}
+  schedule=wk;
+  deletedSlotIds.add(id); // permanently remember this deletion
+  fbSave();
+  renderSchedule();
+}
 let schedView = 'list'; // 'list' or 'calendar'
 let qaDay=null, qaTime=null;
 
@@ -1536,12 +1564,19 @@ function submitSlot(){
   const time=document.getElementById('nf-time').value;
   const learner=document.getElementById('nf-learner').value.trim();
   if(!time||!learner){alert('Please select a time slot and enter learner name');return;}
+  // Enforce max 4 sessions per time slot
+  const slotsAtTime=(schedule[currentDay]||[]).filter(s=>s.time===time);
+  if(slotsAtTime.length>=4){
+    alert('⚠️ Slot not available — this time slot already has 4 sessions booked. Please choose a different time.');
+    return;
+  }
   const note=document.getElementById('nf-note').value.trim();
   const trainer=document.getElementById('nf-trainer').value;
   const coTrainer=document.getElementById('nf-cotrainer').value||'';
   const type=document.getElementById('nf-type').value||'Regular';
+  const addedBy = currentUser ? currentUser.email : 'unknown';
   if(!schedule[currentDay])schedule[currentDay]=[];
-  schedule[currentDay].push({id:++slotId,time,learner,note,trainer,coTrainer,att:'',type});
+  schedule[currentDay].push({id:++slotId,time,learner,note,trainer,coTrainer,att:'',type,addedBy,addedAt:new Date().toISOString()});
   ['nf-learner','nf-note'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('nf-time').value='';
   document.getElementById('nf-cotrainer').value='';
@@ -1568,6 +1603,12 @@ function renderStats(){
 function openNotes(slotId,learnerName){
   activeNoteId=slotId;
   document.getElementById('modal-learner').textContent=learnerName||'';
+  // Show who is adding this note (logged-in user)
+  const authorLbl = document.getElementById('note-author-lbl');
+  if(authorLbl){
+    const email = currentUser ? currentUser.email : 'unknown';
+    authorLbl.textContent = email;
+  }
   syncAllDropdowns();
   renderNotesList();
   document.getElementById('notes-modal').classList.add('open');
@@ -1584,7 +1625,11 @@ function renderNotesList(){
   list.innerHTML=notes.map((n,i)=>
     '<div class="note-item">'+
       '<div class="note-body">'+
-        '<div class="note-meta"><span class="note-trainer">'+x(n.trainer)+'</span><span>'+n.ts+'</span></div>'+
+        '<div class="note-meta">'+
+          '<span class="note-trainer">'+(n.email ? x(n.email.split('@')[0]) : x(n.trainer||''))+'</span>'+
+          (n.email ? '<span style="font-size:0.6rem;color:var(--muted)">@'+x(n.email.split('@')[1]||'')+'</span>' : '')+
+          '<span>'+n.ts+'</span>'+
+        '</div>'+
         '<div>'+x(n.text)+'</div>'+
       '</div>'+
       '<button class="note-x" onclick="delNote('+i+')"></button>'+
@@ -1593,11 +1638,12 @@ function renderNotesList(){
 }
 function addNote(){
   const text=document.getElementById('note-text').value.trim();
-  const trainer=document.getElementById('note-trainer-sel').value;
   if(!text){alert('Please write a note');return;}
   if(!learnerNotes[activeNoteId])learnerNotes[activeNoteId]=[];
   const ts=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short'})+' '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
-  learnerNotes[activeNoteId].push({trainer:trainer||'',text,ts});
+  const email = currentUser ? currentUser.email : '';
+  const trainer = email ? email.split('@')[0] : '';
+  learnerNotes[activeNoteId].push({trainer, email, text, ts});
   document.getElementById('note-text').value='';
   fbSave();
   renderNotesList();
