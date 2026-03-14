@@ -713,6 +713,7 @@ tr:hover td{background:rgba(41,171,226,0.03);}
       <button class="day-btn" onclick="pickDay('Thursday',this)">Thu</button>
       <button class="day-btn" onclick="pickDay('Friday',this)">Fri</button>
       <button class="day-btn" onclick="pickDay('Saturday',this)">Sat</button>
+      <button class="day-btn" onclick="pickDay('Sunday',this)">Sun</button>
       <input type="date" class="date-inp" id="sched-date" onchange="dateChanged(this.value)">
       <span id="week-indicator" style="font-size:0.7rem;color:var(--sib-blue);background:rgba(41,171,226,0.1);border:1px solid rgba(41,171,226,0.25);border-radius:6px;padding:0.28rem 0.65rem;white-space:nowrap;margin-left:0.3rem"></span>
       <!-- View toggle -->
@@ -784,6 +785,7 @@ tr:hover td{background:rgba(41,171,226,0.03);}
       <button class="day-btn" id="tr-day-Thu" onclick="pickTrackerDay('Thursday',this)">Thu</button>
       <button class="day-btn" id="tr-day-Fri" onclick="pickTrackerDay('Friday',this)">Fri</button>
       <button class="day-btn" id="tr-day-Sat" onclick="pickTrackerDay('Saturday',this)">Sat</button>
+      <button class="day-btn" id="tr-day-Sun" onclick="pickTrackerDay('Sunday',this)">Sun</button>
     </div>
     <div style="display:flex;gap:1rem;margin-bottom:0.75rem;align-items:center;flex-wrap:wrap;">
       <span style="font-size:0.65rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.08em;">Legend:</span>
@@ -795,7 +797,7 @@ tr:hover td{background:rgba(41,171,226,0.03);}
     </div>
     <div class="tr-wrap">
       <div class="tr-head" id="tr-head-row">
-        <div>Learner</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>RS</div><div>Total / Status</div><div></div>
+        <div>Learner</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div><div>RS</div><div>Total / Status</div><div></div>
       </div>
       <div id="tracker-body"></div>
     </div>
@@ -824,6 +826,7 @@ tr:hover td{background:rgba(41,171,226,0.03);}
         <button class="day-btn" onclick="pickMsgDay('Thursday',this)">Thu</button>
         <button class="day-btn" onclick="pickMsgDay('Friday',this)">Fri</button>
         <button class="day-btn" onclick="pickMsgDay('Saturday',this)">Sat</button>
+        <button class="day-btn" onclick="pickMsgDay('Sunday',this)">Sun</button>
       </div>
       <button class="copy-btn" style="margin-left:auto" onclick="copyWA()">📋 Copy WhatsApp Message</button>
     </div>
@@ -955,6 +958,44 @@ tr:hover td{background:rgba(41,171,226,0.03);}
       <button class="btn btn-primary" onclick="submitQA()" style="flex:1;">Add Session</button>
       <button class="btn" onclick="closeQA()">Cancel</button>
     </div>
+  </div>
+</div>
+
+<!-- RS RESCHEDULED MODAL -->
+<div class="modal-bg" id="rs-modal" onclick="if(event.target===this)closeRSModal()">
+  <div class="modal" style="width:420px;">
+    <div class="modal-hd">
+      <div>
+        <div class="modal-ttl" style="color:var(--purple)">🔄 Session Rescheduled</div>
+        <div class="modal-sub" id="rs-learner-name" style="color:var(--muted)"></div>
+      </div>
+      <button class="modal-x" onclick="closeRSModal()">✕</button>
+    </div>
+    <p style="font-size:0.78rem;color:var(--muted);margin-bottom:1.1rem;line-height:1.5;">This session has been marked as Rescheduled. What would you like to do?</p>
+    <!-- Option 1: Book new date -->
+    <div id="rs-book-panel" style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:0.7rem;">
+      <div style="font-size:0.8rem;font-weight:700;color:var(--text);margin-bottom:0.65rem;">📅 Book a new date</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.55rem;">
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="rs-date" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:6px;padding:0.38rem 0.55rem;color:var(--text);font-size:0.8rem;outline:none;">
+        </div>
+        <div class="field">
+          <label>Time</label>
+          <select id="rs-time" style="width:100%;background:var(--s1);border:1px solid var(--border);border-radius:6px;padding:0.38rem 0.55rem;color:var(--text);font-size:0.8rem;outline:none;">
+            <option value="">— Pick time —</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="bookRSSlot()" style="width:100%;">✓ Book this slot</button>
+    </div>
+    <!-- Option 2: Discuss later -->
+    <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:1rem;">
+      <div style="font-size:0.8rem;font-weight:700;color:var(--text);margin-bottom:0.5rem;">💬 Next slot to be discussed</div>
+      <div style="font-size:0.73rem;color:var(--muted);margin-bottom:0.6rem;">Mark this session as "date TBD" — a reminder note will be added automatically.</div>
+      <button class="btn" onclick="markRSTBD()" style="width:100%;border-color:var(--purple);color:var(--purple);">Mark as TBD — discuss later</button>
+    </div>
+    <button class="btn" onclick="closeRSModal()" style="width:100%;margin-top:0.6rem;">Skip — just mark RS</button>
   </div>
 </div>
 
@@ -1097,7 +1138,7 @@ function applyRemoteData(data){
 
   // Re-point schedule to current week
   if(!scheduleByWeek[currentWeekKey])
-    scheduleByWeek[currentWeekKey]={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[]};
+    scheduleByWeek[currentWeekKey]={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
   schedule = scheduleByWeek[currentWeekKey];
 }
 
@@ -1171,7 +1212,7 @@ function connectFirebase(){
 
 
 const TCOLORS=['#29ABE2','#F26522','#F7C325','#9EA3A8','#22c55e','#a78bfa','#2dd4bf','#ef4444','#60a5fa','#fb923c','#34d399','#e879f9','#facc15','#94a3b8','#38bdf8'];
-const DAYS=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DAYS=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const STYPES=['Regular','Intro Session','Garment Review','Portfolio Meeting','Exam Meeting','Range Board','Mood Board','Revision','Double Trouble','Offline'];
 
 let trainers=['Priya','Riya','Ruchi','Nandini','Disha','Ayushi Rai','Shiuli','Priyanka G','Jagriti','Bharti','Sneha','Sanjana','Akansha'];
@@ -1196,7 +1237,7 @@ let allWeekData={};
 
 function getWeekStore(key){
   if(!allWeekData[key]) allWeekData[key]={
-    msgSlots:{Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[]},
+    msgSlots:{Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]},
     tasks:{training:[],operations:[],marketing:[],admin:[],other:[]},
     tracker:[],
     attData:{},
@@ -1208,7 +1249,7 @@ function getWeekStore(key){
   ['training','operations','marketing','admin','other'].forEach(k=>{
     if(!Array.isArray(store.tasks[k])) store.tasks[k]=[];
   });
-  if(!store.msgSlots) store.msgSlots={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[]};
+  if(!store.msgSlots) store.msgSlots={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
   if(!store.attData) store.attData={};
   if(!store.msgDoneData) store.msgDoneData={};
   if(!Array.isArray(store.tracker)) store.tracker=[];
@@ -1352,7 +1393,7 @@ function dateChanged(val){
   currentWeekKey=newWeekKey;
   // Switch active schedule to the correct week (or create empty if new week)
   if(!scheduleByWeek[currentWeekKey]){
-    scheduleByWeek[currentWeekKey]={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[]};
+    scheduleByWeek[currentWeekKey]={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
   }
   schedule=scheduleByWeek[currentWeekKey];
   // Update week indicator
@@ -1599,21 +1640,125 @@ function saveComment(slotId){
 }
 
 function renderSchedStats(){ renderStats(); }
+let _rsSlotId = null; // slot being rescheduled
+
 function upAtt(id,sel){
   const wd=getSlotWeekData(id);
   wd.att=sel.value;
   sel.className='att-sel att-'+(sel.value||'blank');
-  // Update row highlight for RS (purple) without full re-render
-  const row=sel.closest('tr')||sel.closest('.sched-row');
+  const row=sel.closest('.slot-row');
   if(row){
-    row.classList.remove('att-rs-row','att-a-row');
-    if(sel.value==='RS') row.classList.add('att-rs-row');
-    if(sel.value==='A')  row.classList.add('att-a-row');
+    row.classList.remove('row-rs','row-active');
+    if(sel.value==='RS') row.classList.add('row-rs');
+    else if(row.querySelector('.si') && row.querySelector('.si').value) row.classList.add('row-active');
   }
-  // Update stats bar without re-rendering entire table
   renderSchedStats();
   fbSave();
+  // Show RS options modal when RS is selected
+  if(sel.value==='RS') openRSModal(id);
 }
+
+function openRSModal(slotId){
+  _rsSlotId = slotId;
+  const slot = findSlot(slotId);
+  const wd = getSlotWeekData(slotId);
+  // Set learner name label
+  document.getElementById('rs-learner-name').textContent = (slot?slot.learner:'') + (slot&&slot.trainer?' · '+slot.trainer:'');
+  // Pre-fill date to next week same day
+  const today = new Date();
+  today.setDate(today.getDate()+7);
+  document.getElementById('rs-date').value = today.toISOString().split('T')[0];
+  // Populate time dropdown
+  const tsel = document.getElementById('rs-time');
+  tsel.innerHTML = '<option value="">— Pick time —</option>' +
+    FIXED_TIMES.map(t=>`<option value="${t}"${slot&&slot.time===t?' selected':''}>${t}</option>`).join('');
+  document.getElementById('rs-modal').classList.add('open');
+}
+
+function closeRSModal(){
+  document.getElementById('rs-modal').classList.remove('open');
+  _rsSlotId = null;
+}
+
+function bookRSSlot(){
+  const dateVal = document.getElementById('rs-date').value;
+  const timeVal = document.getElementById('rs-time').value;
+  if(!dateVal || !timeVal){ alert('Please pick a date and time.'); return; }
+
+  // Work out which day of the week this date falls on
+  const d = new Date(dateVal+'T00:00:00');
+  const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const targetDay = dayNames[d.getDay()];
+
+  // Work out the week key (Monday of that week)
+  const dayIdx = d.getDay();
+  const diffToMon = dayIdx===0 ? -6 : 1-dayIdx;
+  const mon = new Date(d); mon.setDate(d.getDate()+diffToMon);
+  const targetWeekKey = mon.toISOString().split('T')[0];
+
+  // Get or create that week's schedule
+  if(!scheduleByWeek[targetWeekKey]){
+    scheduleByWeek[targetWeekKey] = {Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
+  }
+  const weekSched = scheduleByWeek[targetWeekKey];
+  if(!weekSched[targetDay]) weekSched[targetDay]=[];
+
+  // Copy the original slot into the new date/time
+  const orig = findSlot(_rsSlotId);
+  const newSlot = {
+    id: ++slotId,
+    time: timeVal,
+    learner: orig ? orig.learner : '',
+    trainer: orig ? orig.trainer : '',
+    coTrainer: orig ? (orig.coTrainer||'') : '',
+    type: orig ? orig.type : 'Regular',
+    note: 'Rescheduled from ' + (orig?currentDay:'') + ' ' + (orig?orig.time:''),
+    att: '',
+    addedBy: currentUser ? currentUser.email : '',
+    addedAt: new Date().toISOString()
+  };
+  weekSched[targetDay].push(newSlot);
+
+  // Add a comment on the original slot noting the reschedule
+  if(_rsSlotId){
+    if(!learnerNotes[_rsSlotId]) learnerNotes[_rsSlotId]=[];
+    const ts=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short'})+' '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    learnerNotes[_rsSlotId].push({
+      authorEmail: currentUser?currentUser.email:'',
+      trainer: currentUser?currentUser.email.split('@')[0]:'',
+      text: `🔄 Rescheduled → booked for ${targetDay} ${timeVal} (${dateVal})`,
+      ts
+    });
+    // Refresh comment panel if open
+    const ch = document.getElementById('ch-'+_rsSlotId);
+    if(ch) ch.innerHTML = renderCommentHistory(_rsSlotId);
+    const btn = document.querySelector('#r'+_rsSlotId+' .comment-btn');
+    if(btn){ const cnt=learnerNotes[_rsSlotId].length; btn.textContent='💬 '+cnt; btn.classList.add('has-comments'); }
+  }
+
+  fbSave();
+  closeRSModal();
+  alert(`✓ Session booked on ${targetDay}, ${dateVal} at ${timeVal}`);
+}
+
+function markRSTBD(){
+  if(!_rsSlotId) return;
+  if(!learnerNotes[_rsSlotId]) learnerNotes[_rsSlotId]=[];
+  const ts=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short'})+' '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  learnerNotes[_rsSlotId].push({
+    authorEmail: currentUser?currentUser.email:'',
+    trainer: currentUser?currentUser.email.split('@')[0]:'',
+    text: '🔄 Rescheduled — next slot to be discussed with learner',
+    ts
+  });
+  const ch = document.getElementById('ch-'+_rsSlotId);
+  if(ch) ch.innerHTML = renderCommentHistory(_rsSlotId);
+  const btn = document.querySelector('#r'+_rsSlotId+' .comment-btn');
+  if(btn){ const cnt=learnerNotes[_rsSlotId].length; btn.textContent='💬 '+cnt; btn.classList.add('has-comments'); }
+  fbSave();
+  closeRSModal();
+}
+
 function findSlot(id){for(const d of DAYS){const s=(schedule[d]||[]).find(x=>x.id===id);if(s)return s;}return null;}
 
 // Robust learner name match — handles "Aasma_June25" vs "Aasma", "parul pal" vs "Parul Pal"
@@ -2024,7 +2169,7 @@ function delNote(i){
   learnerNotes[activeNoteId].splice(i,1);
   fbSave(); renderNotesList();
 }
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeNotes();closeQA();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeNotes();closeQA();closeRSModal();}});
 
 // --- LECTURE TRACKER -----------------------------------------------------
 let currentTrackerDay = ''; // '' = All Days
@@ -2096,7 +2241,7 @@ function renderTracker(){
       th.innerHTML = '<div style="text-align:left">Learner</div><div>'+currentTrackerDay.substring(0,3)+'</div><div>RS</div><div>Total / Status</div><div></div>';
       th.style.gridTemplateColumns = '240px 1fr 60px 130px 36px';
     } else {
-      th.innerHTML = '<div style="text-align:left">Learner</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>RS</div><div>Total / Status</div><div></div>';
+      th.innerHTML = '<div style="text-align:left">Learner</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div><div>RS</div><div>Total / Status</div><div></div>';
       th.style.gridTemplateColumns = '';
     }
   }
@@ -2777,7 +2922,7 @@ document.getElementById('sched-date').value=today.toISOString().split('T')[0];
 currentWeekKey=getWeekKey();
 // Switch schedule to current week
 if(!scheduleByWeek[currentWeekKey]){
-  scheduleByWeek[currentWeekKey]={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[]};
+  scheduleByWeek[currentWeekKey]={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
 }
 schedule=scheduleByWeek[currentWeekKey];
 document.getElementById('week-indicator').textContent='Week of '+fmtWeekRange(currentWeekKey);
