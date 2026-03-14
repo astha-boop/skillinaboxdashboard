@@ -1008,24 +1008,22 @@ function setSyncStatus(state, text){
 function fbSave(){
   if(!db || !fbConnected) return;
   if(_saveTimer) clearTimeout(_saveTimer);
-  _isSaving = true; // block listener IMMEDIATELY — not after 800ms debounce
+  _isSaving = true; // block listener immediately
   setSyncStatus('syncing','Saving…');
   _saveTimer = setTimeout(()=>{
     _saveTimer = null;
     const userWeeks = {};
     Object.keys(scheduleByWeek).forEach(wk=>{
-      if(wk !== '2026-03-02') userWeeks[wk] = scheduleByWeek[wk];
+      if(wk === '2026-03-02') return;
+      userWeeks[wk] = {};
+      DAYS.forEach(d=>{
+        // Always strip deleted IDs before writing — belt AND suspenders
+        userWeeks[wk][d] = (scheduleByWeek[wk][d]||[]).filter(s=>!deletedSlotIds.has(Number(s.id)));
+      });
     });
     const payload = {
-      trainers:    trainers,
-      userWeeks:   userWeeks,
-      allWeekData: allWeekData,
-      learnerNotes:learnerNotes,
-      notifications: notifications,
-      slotId:      slotId,
-      msgId:       msgId,
-      trackerId:   trackerId,
-      taskId:      taskId,
+      trainers, userWeeks, allWeekData, learnerNotes, notifications,
+      slotId, msgId, trackerId, taskId,
       deletedSlotIds: [...deletedSlotIds],
     };
     db.ref('skillinabox/data').set(payload)
@@ -1057,65 +1055,46 @@ function deepMerge(target, source){
 function applyRemoteData(data){
   if(!data) return;
   if(data.trainers) trainers = data.trainers;
-  // Restore deleted IDs list first so merge below can honour it
-  if(data.deletedSlotIds) data.deletedSlotIds.forEach(id=>deletedSlotIds.add(id));
-  // Merge user-created weeks — for each week, merge each day's sessions
-  // by ID so hardcoded sessions are never lost and Firebase-added ones are kept
+
+  // Restore deletedSlotIds first
+  if(data.deletedSlotIds && Array.isArray(data.deletedSlotIds)){
+    data.deletedSlotIds.forEach(id => deletedSlotIds.add(Number(id)));
+  }
+
+  // REPLACE schedule weeks directly — no merging, no re-adding deleted slots
+  // Remote data IS the truth. Just filter out any known deleted IDs as a safety net.
   if(data.userWeeks){
     Object.keys(data.userWeeks).forEach(wk=>{
       const remoteWeek = data.userWeeks[wk];
-      if(!scheduleByWeek[wk]){
-        // Filter out any deleted slots before adopting the week
-        const filtered = {};
-        DAYS.forEach(day=>{
-          filtered[day] = (remoteWeek[day]||[]).filter(s=>!deletedSlotIds.has(s.id));
-        });
-        scheduleByWeek[wk] = filtered;
-        return;
-      }
-      // Merge day by day
-      ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach(day=>{
-        const local  = scheduleByWeek[wk][day] || [];
-        const remote = (remoteWeek[day]) || [];
-        // Build map of existing IDs from hardcoded data
-        const localIds = new Set(local.map(s=>s.id));
-        // Add remote sessions that aren't already in local and weren't deleted
-        remote.forEach(rs=>{
-          if(deletedSlotIds.has(rs.id)) return; // never re-add deleted slots
-          if(!localIds.has(rs.id)){
-            local.push(rs);
-          } else {
-            // Update fields that users may have changed (trainer, note, type, learner name)
-            const ls = local.find(s=>s.id===rs.id);
-            if(ls){
-              if(rs.trainer    !== undefined) ls.trainer    = rs.trainer;
-              if(rs.note       !== undefined) ls.note       = rs.note;
-              if(rs.type       !== undefined) ls.type       = rs.type;
-              if(rs.learner    !== undefined) ls.learner    = rs.learner;
-              if(rs.addedBy    !== undefined) ls.addedBy    = rs.addedBy;
-              if(rs.coTrainer  !== undefined) ls.coTrainer  = rs.coTrainer;
-            }
-          }
-        });
-        // Also remove any locally-present slots that have since been deleted
-        scheduleByWeek[wk][day] = local.filter(s=>!deletedSlotIds.has(s.id));
+      scheduleByWeek[wk] = {};
+      DAYS.forEach(day=>{
+        scheduleByWeek[wk][day] = (remoteWeek[day]||[]).filter(s=>!deletedSlotIds.has(Number(s.id)));
       });
     });
   }
-  // Deep merge allWeekData so nested week stores don't clobber each other
-  if(data.allWeekData) deepMerge(allWeekData, data.allWeekData);
-  // learnerNotes: replace each slot's array directly — never deep-merge arrays
-  if(data.learnerNotes){
-    Object.keys(data.learnerNotes).forEach(k=>{
-      learnerNotes[k] = data.learnerNotes[k]; // direct replace preserves full array
+
+  // Replace allWeekData completely
+  if(data.allWeekData){
+    Object.keys(data.allWeekData).forEach(wk=>{
+      allWeekData[wk] = data.allWeekData[wk];
     });
   }
+
+  // Replace learnerNotes arrays directly
+  if(data.learnerNotes){
+    Object.keys(data.learnerNotes).forEach(k=>{
+      learnerNotes[k] = data.learnerNotes[k];
+    });
+  }
+
   // Notifications
   if(data.notifications) Object.assign(notifications, data.notifications);
+
   if(data.slotId    && data.slotId    > slotId)    slotId    = data.slotId;
   if(data.msgId     && data.msgId     > msgId)     msgId     = data.msgId;
   if(data.trackerId && data.trackerId > trackerId) trackerId = data.trackerId;
   if(data.taskId    && data.taskId    > taskId)    taskId    = data.taskId;
+
   // Re-point schedule to current week
   if(!scheduleByWeek[currentWeekKey])
     scheduleByWeek[currentWeekKey]={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[]};
@@ -1164,7 +1143,7 @@ function connectFirebase(){
             renderAll();
             fbListen();
             setSyncStatus('saved','Live sync on');
-            setTimeout(()=>fbSave(), 1200);
+            // No fbSave() on startup — would overwrite Firebase with stale local state
           }
           if(existing && existing.userWeeks && existing.userWeeks['2026-03-02']){
             // Wipe old hardcoded data then start fresh
@@ -1672,11 +1651,33 @@ function delSlot(id){
   if(!confirm('Remove this session?'))return;
   const wk=scheduleByWeek[currentWeekKey];
   if(!wk)return;
+  // Remove locally immediately
   for(const d of DAYS){wk[d]=(wk[d]||[]).filter(s=>s.id!==id);}
   schedule=wk;
-  deletedSlotIds.add(id); // permanently remember this deletion
-  fbSave();
+  deletedSlotIds.add(Number(id));
   renderSchedule();
+  // Write the deletion straight to Firebase — no debounce, no merge window
+  if(db && fbConnected){
+    _isSaving=true;
+    const userWeeks={};
+    Object.keys(scheduleByWeek).forEach(wkk=>{
+      if(wkk!=='2026-03-02') userWeeks[wkk]=scheduleByWeek[wkk];
+    });
+    // Strip deleted IDs from ALL days in ALL weeks before saving
+    Object.keys(userWeeks).forEach(wkk=>{
+      DAYS.forEach(d=>{
+        userWeeks[wkk][d]=(userWeeks[wkk][d]||[]).filter(s=>!deletedSlotIds.has(Number(s.id)));
+      });
+    });
+    const payload={
+      trainers, userWeeks, allWeekData, learnerNotes, notifications,
+      slotId, msgId, trackerId, taskId,
+      deletedSlotIds:[...deletedSlotIds]
+    };
+    db.ref('skillinabox/data').set(payload)
+      .then(()=>{ setTimeout(()=>{ _isSaving=false; setSyncStatus('saved','Live sync on'); },2000); setSyncStatus('saved','Deleted ✓'); })
+      .catch(e=>{ _isSaving=false; setSyncStatus('error','Delete failed'); console.error(e); });
+  }
 }
 let schedView = 'list'; // 'list' or 'calendar'
 let qaDay=null, qaTime=null;
@@ -2900,9 +2901,9 @@ function connectDatabase(){
       if(existing) applyRemoteData(existing);
       seedDefaultMsgSlots();
       renderAll();
-      fbListen();
+      fbListen(); // start listening AFTER applying remote data
       setSyncStatus('saved','Live sync on');
-      setTimeout(()=>fbSave(), 1200);
+      // Do NOT fbSave() here — would overwrite Firebase with incomplete local state
     });
   } catch(e){
     console.error('DB connect error:',e);
