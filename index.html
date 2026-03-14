@@ -1475,10 +1475,12 @@ function upWeekNote(id,v){const wd=getSlotWeekData(id);wd.note=v;fbSave();render
 function renderCommentHistory(slotId){
   const notes=learnerNotes[slotId]||[];
   if(!notes.length) return '<div style="font-size:0.72rem;color:var(--faint);font-style:italic;">No comments yet</div>';
+  const myEmail = currentUser ? currentUser.email : '';
   return [...notes].reverse().map((n,ri)=>{
     const realIdx=notes.length-1-ri;
     const name = n.authorEmail ? n.authorEmail.split('@')[0] : (n.email ? n.email.split('@')[0] : (n.trainer||'?'));
     const ts   = n.ts||'';
+    const isOwner = myEmail && (n.authorEmail===myEmail || n.email===myEmail);
     return '<div class="comment-entry" style="display:flex;align-items:flex-start;gap:0.4rem;">'+
       '<div style="flex:1">'+
         '<div class="comment-entry-meta">'+
@@ -1487,20 +1489,26 @@ function renderCommentHistory(slotId){
         '</div>'+
         '<div style="font-size:0.75rem;line-height:1.45">'+renderNoteText(n.text)+'</div>'+
       '</div>'+
-      '<button onclick="delComment('+slotId+','+realIdx+')" title="Delete comment" '+
-        'style="background:none;border:none;color:var(--faint);cursor:pointer;font-size:0.8rem;padding:0.1rem 0.3rem;border-radius:4px;flex-shrink:0;transition:color 0.15s;" '+
-        'onmouseover="this.style.color=\'#ef4444\'" onmouseout="this.style.color=\'var(--faint)\'">✕</button>'+
+      (isOwner ?
+        '<button onclick="delComment('+slotId+','+realIdx+')" title="Delete your comment" '+
+          'style="background:none;border:none;color:var(--faint);cursor:pointer;font-size:0.8rem;padding:0.1rem 0.3rem;border-radius:4px;flex-shrink:0;transition:color 0.15s;" '+
+          'onmouseover="this.style.color=\'#ef4444\'" onmouseout="this.style.color=\'var(--faint)\'">✕</button>'
+        : '<span style="width:20px;flex-shrink:0;"></span>')+
     '</div>';
   }).join('');
 }
 
 function delComment(slotId, idx){
   if(!learnerNotes[slotId]) return;
+  const n = learnerNotes[slotId][idx];
+  const myEmail = currentUser ? currentUser.email : '';
+  if(!myEmail || (n.authorEmail !== myEmail && n.email !== myEmail)){
+    alert('You can only delete your own comments.');
+    return;
+  }
   learnerNotes[slotId].splice(idx,1);
-  // Refresh history panel
   const ch=document.getElementById('ch-'+slotId);
   if(ch) ch.innerHTML=renderCommentHistory(slotId);
-  // Update comment button badge on the row
   const row=document.getElementById('r'+slotId);
   if(row){
     const cnt=learnerNotes[slotId].length;
@@ -1957,16 +1965,16 @@ function renderNotesList(){
   const notes=learnerNotes[activeNoteId]||[];
   const list=document.getElementById('notes-list');
   if(!notes.length){list.innerHTML='<div class="empty">No notes yet. Add one below.</div>';return;}
-  // Show newest first
+  const myEmail = currentUser ? currentUser.email : '';
   list.innerHTML=[...notes].reverse().map((n,ri)=>{
-    const realIdx=notes.length-1-ri; // original index for delete
-    // authorEmail is the new field; fall back to email, then trainer (for old notes)
+    const realIdx=notes.length-1-ri;
     const nameDisplay=n.authorEmail
       ? n.authorEmail.split('@')[0]
       : (n.email?n.email.split('@')[0]:(n.trainer||'Unknown'));
     const domainDisplay=n.authorEmail
       ? '@'+n.authorEmail.split('@')[1]
       : (n.email?'@'+n.email.split('@')[1]:'');
+    const isOwner = myEmail && (n.authorEmail===myEmail || n.email===myEmail);
     return '<div class="note-item">'+
       '<div class="note-body">'+
         '<div class="note-meta">'+
@@ -1976,7 +1984,7 @@ function renderNotesList(){
         '</div>'+
         '<div style="line-height:1.55;margin-top:0.15rem">'+renderNoteText(n.text)+'</div>'+
       '</div>'+
-      '<button class="note-x" onclick="delNote('+realIdx+')">×</button>'+
+      (isOwner ? '<button class="note-x" onclick="delNote('+realIdx+')" title="Delete your note">×</button>' : '')+
     '</div>';
   }).join('');
 }
@@ -2005,10 +2013,15 @@ function addNote(){
   renderNotifBell();
 }
 function delNote(i){
-  if(activeNoteId&&learnerNotes[activeNoteId]){
-    learnerNotes[activeNoteId].splice(i,1);
-    fbSave(); renderNotesList();
+  if(!activeNoteId || !learnerNotes[activeNoteId]) return;
+  const n = learnerNotes[activeNoteId][i];
+  const myEmail = currentUser ? currentUser.email : '';
+  if(!myEmail || (n.authorEmail !== myEmail && n.email !== myEmail)){
+    alert('You can only delete your own notes.');
+    return;
   }
+  learnerNotes[activeNoteId].splice(i,1);
+  fbSave(); renderNotesList();
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeNotes();closeQA();}});
 
@@ -2578,16 +2591,18 @@ function renderTaskSections(){
     }).join('');
     // Always show all tasks for this category (unfiltered) for the row count, but display filtered
     const allCatRows = wTasks()[cat.key]||[];
+    const myEmail = currentUser ? currentUser.email : '';
     const rowsHtml=rows.length?rows.map(t=>{
       const sc='status-'+t.status;
       const dateStr=t.date?(new Date(t.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})):'';
+      const canDelete = !t.createdBy || !myEmail || t.createdBy===myEmail;
       return '<div class="task-row'+(t.status==='done'?' task-done-row':'')+'">'+
-        '<div class="task-name">'+x(t.name)+'</div>'+
+        '<div class="task-name">'+x(t.name)+(t.createdBy?'<span style="font-size:0.59rem;color:var(--faint);margin-left:0.35rem;">'+x(t.createdBy.split('@')[0])+'</span>':'')+'</div>'+
         '<input class="si" value="'+x(t.assign)+'" placeholder="Assign to" onchange="upTask(\''+cat.key+'\',\''+t.id+'\',\'assign\',this.value)" style="font-size:0.74rem">'+
         '<input type="date" class="si" value="'+x(t.date)+'" onchange="upTask(\''+cat.key+'\',\''+t.id+'\',\'date\',this.value)" style="font-size:0.73rem">'+
         '<select class="status-sel '+sc+'" onchange="upTaskStatus(\''+cat.key+'\',\''+t.id+'\',this)">'+statusOpts(t.id,t.status)+'</select>'+
         '<input class="delay-inp" value="'+x(t.delay||'')+'" placeholder="Reason for delay" onchange="upTask(\''+cat.key+'\',\''+t.id+'\',\'delay\',this.value)">'+
-        '<button class="del-btn" onclick="delTask(\''+cat.key+'\',\''+t.id+'\')">✕</button>'+
+        (canDelete ? '<button class="del-btn" onclick="delTask(\''+cat.key+'\',\''+t.id+'\')">✕</button>' : '<span style="width:28px"></span>')+
       '</div>';
     }).join(''):'<div class="empty" style="padding:0.6rem 1rem;font-size:0.72rem;color:var(--faint)">No '+(taskFilter!=='all'?taskFilter+' ':'')+'tasks — click + Add Row to add one.</div>';
     return '<div class="task-section">'+
@@ -2624,6 +2639,13 @@ function upTaskStatus(cat,id,sel){
 }
 
 function delTask(cat,id){
+  const task = (wTasks()[cat]||[]).find(t=>t.id===id);
+  if(!task) return;
+  const myEmail = currentUser ? currentUser.email : '';
+  if(task.createdBy && myEmail && task.createdBy !== myEmail){
+    alert('You can only delete tasks you created.');
+    return;
+  }
   wTasks()[cat]=(wTasks()[cat]||[]).filter(t=>t.id!==id);
   fbSave();
   renderTaskSections();
@@ -2632,7 +2654,7 @@ function delTask(cat,id){
 function addInlineTask(cat){
   wTasks()[cat]=wTasks()[cat]||[];
   const today=new Date().toISOString().split('T')[0];
-  wTasks()[cat].push({id:'t'+(++taskId),name:'New Task',assign:'',date:today,status:'pending',delay:''});
+  wTasks()[cat].push({id:'t'+(++taskId),name:'New Task',assign:'',date:today,status:'pending',delay:'',createdBy:currentUser?currentUser.email:''});
   fbSave();
   renderTaskSections();
 }
@@ -2657,7 +2679,8 @@ function submitAddTask(){
     assign:document.getElementById('at-assign').value.trim(),
     date:document.getElementById('at-date').value,
     status:document.getElementById('at-status').value,
-    delay:document.getElementById('at-delay').value.trim()
+    delay:document.getElementById('at-delay').value.trim(),
+    createdBy: currentUser ? currentUser.email : ''
   });
   closeAddTaskModal();
   fbSave();
