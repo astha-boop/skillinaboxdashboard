@@ -101,6 +101,7 @@ h1{font-family:'Arial Black','Impact','Trebuchet MS',sans-serif;font-size:2.3rem
 .sel{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:5px;padding:0.28rem 0.42rem;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;font-size:0.76rem;color:var(--text);outline:none;cursor:pointer;}
 .sel:focus{border-color:var(--sib-blue);}
 .sel option{background:#13264a;}
+.sel-conflict{border-color:rgba(247,195,37,0.6)!important;background:rgba(247,195,37,0.06)!important;}
 .att-sel{width:100%;border-radius:5px;padding:0.28rem 0.42rem;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;font-size:0.74rem;font-weight:600;outline:none;cursor:pointer;border:1px solid transparent;}
 .att-P{background:rgba(34,197,94,0.12);color:#22c55e;border-color:rgba(34,197,94,0.3);}
 .att-A{background:rgba(239,68,68,0.12);color:#ef4444;border-color:rgba(239,68,68,0.3);}
@@ -196,6 +197,7 @@ h1{font-family:'Arial Black','Impact','Trebuchet MS',sans-serif;font-size:2.3rem
 .pill-green{background:rgba(34,197,94,0.12);color:#22c55e;}
 .pill-red{background:rgba(239,68,68,0.12);color:#ef4444;}
 .pill-amber{background:rgba(247,195,37,0.12);color:#F7C325;}
+.pill-rs{background:rgba(167,139,250,0.14);color:#a78bfa;}
 .day-empty{font-size:0.65rem;color:var(--faint);text-align:center;padding-top:4px;}
 .ti-inp{width:100%;text-align:center;background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:0.2rem;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;font-size:0.77rem;color:var(--text);outline:none;}
 .ti-inp:focus{border-color:var(--sib-blue);}
@@ -594,6 +596,26 @@ tr:hover td{background:rgba(41,171,226,0.03);}
           <div id="notif-list"><div class="notif-empty">No notifications yet</div></div>
         </div>
       </div>
+      <div style="position:relative;">
+        <button id="history-btn" onclick="toggleHistoryPanel()" title="Edit History" style="background:none;border:1px solid var(--border);border-radius:7px;padding:0.32rem 0.55rem;cursor:pointer;font-size:0.82rem;color:var(--muted);transition:all 0.15s;" onmouseover="this.style.borderColor='var(--sib-blue)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">🕐</button>
+        <div id="history-panel" style="display:none;position:absolute;top:calc(100% + 8px);right:0;width:380px;background:var(--s1);border:1px solid var(--border);border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,0.5);z-index:9000;max-height:420px;overflow-y:auto;">
+          <div style="padding:0.65rem 0.9rem;border-bottom:1px solid var(--border);font-size:0.72rem;font-weight:700;color:var(--text);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--s1);z-index:1;">
+            <span>🕐 Edit History</span>
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+              <select id="history-filter" onchange="renderHistoryPanel()" style="background:var(--s2);border:1px solid var(--border);border-radius:5px;padding:0.18rem 0.38rem;font-size:0.65rem;color:var(--text);outline:none;">
+                <option value="">All sections</option>
+                <option>Schedule</option>
+                <option>Attendance</option>
+                <option>Message Slots</option>
+                <option>Tasks</option>
+                <option>Tracker</option>
+                <option>Comments</option>
+              </select>
+            </div>
+          </div>
+          <div id="history-list"><div style="padding:1.2rem;text-align:center;font-size:0.75rem;color:var(--muted)">No edits recorded yet</div></div>
+        </div>
+      </div>
       <button class="btn" onclick="exportCSV()">⬇ Export</button>
       <button class="btn btn-primary" onclick="flashSave()">✓ Save All</button>
     </div>
@@ -805,13 +827,45 @@ tr:hover td{background:rgba(41,171,226,0.03);}
 
   <!-- TRAINER REPORT -->
   <div class="tab-panel" id="tab-trainers">
-    <div class="trainer-grid" id="trainer-cards"></div>
-    <div class="log-wrap">
-      <div class="log-head">
-        <div class="section-title" style="margin:0;padding:0;border:none">Trainer Session Log</div>
-        <select class="nf" id="tr-log-filter" onchange="renderTrainerLog()" style="width:160px"><option value="">All Trainers</option></select>
+    <!-- View toggle + filters -->
+    <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:1.2rem;flex-wrap:wrap;">
+      <div style="display:flex;background:var(--s2);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+        <button id="tr-view-day" onclick="setTrainerView('day')" style="padding:0.38rem 1rem;font-size:0.76rem;font-weight:600;border:none;cursor:pointer;font-family:inherit;background:var(--sib-blue);color:white;transition:all 0.15s;">📅 Day-wise</button>
+        <button id="tr-view-month" onclick="setTrainerView('month')" style="padding:0.38rem 1rem;font-size:0.76rem;font-weight:600;border:none;cursor:pointer;font-family:inherit;background:none;color:var(--muted);transition:all 0.15s;">📆 Monthly</button>
       </div>
-      <div style="overflow-x:auto"><table><thead><tr><th>Day</th><th>Time</th><th>Learner</th><th>Trainer</th><th>Attendance</th><th>Type</th></tr></thead><tbody id="trainer-log"></tbody></table></div>
+      <!-- Day-wise controls -->
+      <div id="tr-day-controls" style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+        <select class="nf" id="tr-log-filter" onchange="renderTrainerCards()" style="width:160px"><option value="">All Trainers</option></select>
+        <span style="font-size:0.72rem;color:var(--muted)">Showing: <strong id="tr-week-lbl" style="color:var(--text)"></strong></span>
+      </div>
+      <!-- Monthly controls -->
+      <div id="tr-month-controls" style="display:none;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+        <select class="nf" id="tr-month-sel" onchange="renderMonthlyReport()" style="width:150px"></select>
+        <select class="nf" id="tr-month-trainer" onchange="renderMonthlyReport()" style="width:160px"><option value="">All Trainers</option></select>
+      </div>
+    </div>
+
+    <!-- DAY-WISE VIEW -->
+    <div id="tr-day-view">
+      <div class="trainer-grid" id="trainer-cards"></div>
+      <div class="log-wrap">
+        <div class="log-head">
+          <div class="section-title" style="margin:0;padding:0;border:none">Trainer Session Log</div>
+        </div>
+        <div style="overflow-x:auto"><table><thead><tr><th>Day</th><th>Time</th><th>Learner</th><th>Trainer</th><th>Attendance</th><th>Type</th></tr></thead><tbody id="trainer-log"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- MONTHLY VIEW -->
+    <div id="tr-month-view" style="display:none;">
+      <div id="monthly-summary-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:0.85rem;margin-bottom:1.4rem;"></div>
+      <div class="log-wrap">
+        <div class="log-head">
+          <div class="section-title" style="margin:0;padding:0;border:none">Monthly Session Log</div>
+          <span id="monthly-total-badge" style="font-size:0.72rem;background:rgba(41,171,226,0.14);color:var(--sib-blue);padding:0.25rem 0.65rem;border-radius:6px;"></span>
+        </div>
+        <div style="overflow-x:auto"><table><thead><tr><th>Week</th><th>Day</th><th>Time</th><th>Learner</th><th>Trainer</th><th>Attendance</th><th>Type</th></tr></thead><tbody id="monthly-log"></tbody></table></div>
+      </div>
     </div>
   </div>
 
@@ -999,6 +1053,28 @@ tr:hover td{background:rgba(41,171,226,0.03);}
   </div>
 </div>
 
+<!-- DUPLICATE LEARNER WARNING MODAL -->
+<div class="modal-bg" id="dup-modal">
+  <div class="modal" style="width:460px;">
+    <div class="modal-hd">
+      <div>
+        <div class="modal-ttl" style="color:var(--sib-yellow)">⚠️ Learner Already Booked</div>
+        <div class="modal-sub" id="dup-learner-name" style="color:var(--muted)"></div>
+      </div>
+    </div>
+    <div id="dup-existing-slots" style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:0.85rem;margin-bottom:1rem;font-size:0.78rem;line-height:1.7;"></div>
+    <p style="font-size:0.77rem;color:var(--muted);margin-bottom:1rem;line-height:1.5;">This learner already has a session booked this week. Is this a reschedule or a new booking?</p>
+    <div style="display:flex;flex-direction:column;gap:0.55rem;">
+      <button class="btn btn-primary" onclick="dupContinue()" style="width:100%;font-size:0.84rem;padding:0.6rem;">
+        ✓ Continue Booking — add this slot
+      </button>
+      <button class="btn" onclick="dupCancel()" style="width:100%;font-size:0.84rem;padding:0.6rem;border-color:var(--red);color:var(--red);">
+        ✕ Cancel — don't add this slot
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- NOTES MODAL -->
 <div class="modal-bg" id="notes-modal" onclick="if(event.target===this)closeNotes()">
   <div class="modal" style="width:540px;">
@@ -1064,6 +1140,7 @@ function fbSave(){
     });
     const payload = {
       trainers, userWeeks, allWeekData, learnerNotes, notifications,
+      editHistory,
       slotId, msgId, trackerId, taskId,
       deletedSlotIds: [...deletedSlotIds],
     };
@@ -1130,6 +1207,7 @@ function applyRemoteData(data){
 
   // Notifications
   if(data.notifications) Object.assign(notifications, data.notifications);
+  if(data.editHistory && Array.isArray(data.editHistory)) editHistory = data.editHistory;
 
   if(data.slotId    && data.slotId    > slotId)    slotId    = data.slotId;
   if(data.msgId     && data.msgId     > msgId)     msgId     = data.msgId;
@@ -1273,14 +1351,34 @@ function setWTracker(arr){getWeekStore(currentWeekKey).tracker=arr;}
 let msgSlots=null; // not used directly anymore  always via wMsgSlots()
 
 
-let learnerNotes={};
+let learnerNotes={}; 
 let notifications={}; // notifications[email] = [{id, msg, ts, read, slotId, learnerName}]
+let editHistory=[]; // [{id, ts, user, section, action, detail}]
 let currentDay='Monday', currentMsgDay='Monday', activeNoteId=null;
 // slotId set below
 let slotId=1101, msgId=200, trackerId=100;
 let addFormOpen=false;
 // Track deleted slot IDs so Firebase live-listener never re-adds them
 let deletedSlotIds = new Set();
+
+// ── EDIT HISTORY ─────────────────────────────────────────────────────────
+// section: 'Schedule' | 'Attendance' | 'Message Slots' | 'Tasks' | 'Tracker'
+// action:  short verb e.g. 'Changed trainer', 'Marked Present', 'Added slot'
+// detail:  human-readable summary string
+function logEdit(section, action, detail){
+  const user = currentUser ? currentUser.email.split('@')[0] : 'unknown';
+  const now = new Date();
+  const ts = now.toLocaleDateString('en-IN',{day:'numeric',month:'short'})+' '+now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  editHistory.unshift({ // newest first
+    id: Date.now()+'_'+Math.random().toString(36).substr(2,4),
+    ts, user, section, action, detail
+  });
+  // Cap at 500 entries to avoid unbounded growth
+  if(editHistory.length>500) editHistory.length=500;
+  // Refresh panel if open
+  const panel = document.getElementById('history-panel');
+  if(panel && panel.classList.contains('open')) renderHistoryPanel();
+}
 
 // --- UTILS ---------------------------------------------------------------
 function x(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
@@ -1370,7 +1468,7 @@ function switchTab(name,btn){
   document.getElementById('tab-'+name).classList.add('active');
   const tb=document.getElementById('tb-'+name); if(tb)tb.classList.add('active');
   btn.classList.add('active');
-  if(name==='trainers'){renderTrainerCards();}
+  if(name==='trainers'){ if(trainerView==='month') renderMonthlyReport(); else renderTrainerCards(); }
   if(name==='tracker'){renderTracker();}
   if(name==='messages'){renderMsgBody();renderMsgStats();}
   if(name==='tasks'){renderTaskSections();}
@@ -1434,6 +1532,7 @@ function renderSchedule(){
         const isRS=wd.att==='RS';
         const rowCls='slot-row'+(isRS?' row-rs':s.learner?' row-active':'');
         const attCls='att-sel att-'+(wd.att||'blank');
+        const msgConflict = s.trainer ? getMsgSlotConflict(s.trainer, currentDay, s.time) : null;
         rows+='<div class="'+rowCls+'" id="r'+s.id+'">'+
           '<div class="slot-time">'+
             (si===0?'<span style="font-weight:700;font-size:0.78rem">'+x(t)+'</span>':'<span style="color:var(--faint);font-size:0.68rem"></span>')+
@@ -1443,11 +1542,17 @@ function renderSchedule(){
             '<input class="si" value="'+x(s.learner)+'" placeholder="Learner name" style="font-weight:500" onchange="upSlot('+s.id+",'learner'"+ ',this.value)">'+
             (s.addedBy?'<span style="font-size:0.6rem;color:var(--sib-blue);opacity:0.7;margin-top:1px">➕ '+x(s.addedBy.split('@')[0])+'</span>':'')+
           '</div>'+
-          '<select class="sel" onchange="upSlot('+s.id+",'trainer'"+ ',this.value)">'+
-            '<option value=""> Trainer </option>'+
-            trainers.map(tr=>'<option'+(s.trainer===tr?' selected':'')+'>'+x(tr)+'</option>').join('')+
-            '<option value="All"'+(s.trainer==='All'?' selected':'')+'>All (group)</option>'+
-          '</select>'+
+          '<div style="display:flex;flex-direction:column;gap:3px">'+
+            '<select class="sel'+(msgConflict?' sel-conflict':'')+'" onchange="upSlot('+s.id+",'trainer'"+ ',this.value)" title="'+(msgConflict?'⚠️ '+x(s.trainer)+' is assigned to message slot ('+x(msgConflict.from)+'–'+x(msgConflict.to)+') at this time':'')+'">'+
+              '<option value=""> Trainer </option>'+
+              trainers.map(tr=>{
+                const conflict = getMsgSlotConflict(tr, currentDay, s.time);
+                return '<option'+(s.trainer===tr?' selected':'')+(conflict?' style="color:#F7C325"':'')+'>'+x(tr)+(conflict?' ⚠️ msg slot':'')+' </option>';
+              }).join('')+
+              '<option value="All"'+(s.trainer==='All'?' selected':'')+'>All (group)</option>'+
+            '</select>'+
+            (msgConflict?'<span style="font-size:0.59rem;color:#F7C325;margin-top:1px">⚠️ In msg slot '+x(msgConflict.from)+'–'+x(msgConflict.to)+'</span>':'')+
+          '</div>'+
           '<select class="sel" title="Co-Trainer (optional)" onchange="upSlot('+s.id+",'coTrainer'"+ ',this.value)" style="font-size:0.71rem;color:var(--muted)">'+
             '<option value="">+ Co-trainer</option>'+
             trainers.map(tr=>'<option'+(s.coTrainer===tr?' selected':'')+'>'+x(tr)+'</option>').join('')+
@@ -1485,8 +1590,29 @@ function renderSchedule(){
   document.getElementById('slot-count').textContent=allSlots.length+' sessions';
 }
 
-function upSlot(id,f,v){const s=findSlot(id);if(s){s[f]=v;fbSave();}}
-function upWeekNote(id,v){const wd=getSlotWeekData(id);wd.note=v;fbSave();renderSchedStats();}
+function upSlot(id,f,v){
+  const s=findSlot(id);
+  if(!s) return;
+  if(f==='trainer' && v){
+    const conflict = getMsgSlotConflict(v, currentDay, s.time);
+    if(conflict){
+      const ok = confirm(`⚠️ ${v} is assigned to a Message Slot (${conflict.from}–${conflict.to}) that covers ${s.time}.\n\nDo you still want to assign them?`);
+      if(!ok){ renderSchedule(); return; }
+    }
+  }
+  const oldVal = s[f];
+  s[f]=v;
+  const fieldLabel = {learner:'Learner',trainer:'Trainer',coTrainer:'Co-Trainer',type:'Session Type',note:'Slot Note'}[f]||f;
+  logEdit('Schedule', `Changed ${fieldLabel}`, `${s.learner||'slot'} · ${currentDay} ${s.time} · "${oldVal||'—'}" → "${v||'—'}"`);
+  fbSave();
+  if(f==='trainer') renderSchedule();
+}
+function upWeekNote(id,v){
+  const wd=getSlotWeekData(id);
+  const s=findSlot(id);
+  logEdit('Schedule','Updated session note',`${s?s.learner:'slot'} · ${currentDay} · "${v}"`);
+  wd.note=v;fbSave();renderSchedStats();
+}
 
 // ── INLINE COMMENTS (per slot) ────────────────────────────────────────────
 // Comments are stored in learnerNotes[slotId] — same store as modal notes,
@@ -1634,27 +1760,48 @@ function saveComment(slotId){
   // Tag notifications
   const slot=findSlot(slotId);
   const learnerName=slot?slot.learner:'';
+  const slot=findSlot(slotId);
+  const learnerName=slot?slot.learner:'';
+  logEdit('Comments','Added comment',`${learnerName||'slot '+slotId} · "${text.substring(0,60)}${text.length>60?'…':''}"`);
   parseTaggedUsers(text).forEach(name=>addNotification(name,authorEmail,text,learnerName));
   fbSave();
   renderNotifBell();
 }
 
+function renderStats(){
+  const s=schedule[currentDay]||[];
+  const total=s.filter(x=>x.learner).length;
+  const p=s.filter(x=>getSlotWeekData(x.id).att==='P').length;
+  const a=s.filter(x=>getSlotWeekData(x.id).att==='A').length;
+  const rs=s.filter(x=>getSlotWeekData(x.id).att==='RS').length;
+  const nc=s.filter(x=>getSlotWeekData(x.id).att==='NC').length;
+  document.getElementById('day-stats').innerHTML=[
+    ['Total Sessions',total,'var(--sib-blue)','var(--sib-blue)'],
+    ['Present',p,'#22c55e','#22c55e'],
+    ['Absent',a,'#ef4444','#ef4444'],
+    ['Rescheduled',rs,'var(--purple)','var(--purple)'],
+    ['NC / No-Show',nc,'var(--amber)','var(--amber)'],
+  ].map(([l,v,sc,vc],i)=>'<div class="stat-card" style="--sc:'+sc+'"><div class="stat-lbl">'+l+'</div><div class="stat-val" style="color:'+vc+'">'+v+'</div></div>').join('');
+}
 function renderSchedStats(){ renderStats(); }
-let _rsSlotId = null; // slot being rescheduled
+let _rsSlotId = null;
 
 function upAtt(id,sel){
   const wd=getSlotWeekData(id);
+  const oldAtt=wd.att;
   wd.att=sel.value;
   sel.className='att-sel att-'+(sel.value||'blank');
   const row=sel.closest('.slot-row');
   if(row){
     row.classList.remove('row-rs','row-active');
     if(sel.value==='RS') row.classList.add('row-rs');
-    else if(row.querySelector('.si') && row.querySelector('.si').value) row.classList.add('row-active');
+    else if(row.querySelector('.si')&&row.querySelector('.si').value) row.classList.add('row-active');
   }
+  const slot=findSlot(id);
+  const attLabel={'P':'Present','A':'Absent','NC':'No-Show','RS':'Rescheduled','':`Cleared`};
+  logEdit('Attendance',`Marked ${attLabel[sel.value]||sel.value}`,`${slot?slot.learner:'learner'} · ${currentDay} ${slot?slot.time:''} · was "${attLabel[oldAtt]||oldAtt||'unset'}"`);
   renderSchedStats();
   fbSave();
-  // Show RS options modal when RS is selected
   if(sel.value==='RS') openRSModal(id);
 }
 
@@ -1796,7 +1943,9 @@ function delSlot(id){
   if(!confirm('Remove this session?'))return;
   const wk=scheduleByWeek[currentWeekKey];
   if(!wk)return;
-  // Remove locally immediately
+  // Log before removing
+  const slot = findSlot(id);
+  logEdit('Schedule','Deleted slot',`${slot?slot.learner:'slot'} · ${currentDay} ${slot?slot.time:''} · Trainer: ${slot?slot.trainer||'—':'—'}`);
   for(const d of DAYS){wk[d]=(wk[d]||[]).filter(s=>s.id!==id);}
   schedule=wk;
   deletedSlotIds.add(Number(id));
@@ -1816,6 +1965,7 @@ function delSlot(id){
     });
     const payload={
       trainers, userWeeks, allWeekData, learnerNotes, notifications,
+      editHistory,
       slotId, msgId, trackerId, taskId,
       deletedSlotIds:[...deletedSlotIds]
     };
@@ -1894,19 +2044,6 @@ function openQA(day,time){
   setTimeout(()=>document.getElementById('qa-learner').focus(),120);
 }
 function closeQA(){document.getElementById('qa-modal').classList.remove('open');}
-function submitQA(){
-  const learner=document.getElementById('qa-learner').value.trim();
-  if(!learner){alert('Please enter a learner name');return;}
-  const trainer=document.getElementById('qa-trainer').value;
-  const type=document.getElementById('qa-type').value||'Regular';
-  const note=document.getElementById('qa-note').value.trim();
-  if(!schedule[qaDay])schedule[qaDay]=[];
-  schedule[qaDay].push({id:++slotId,time:qaTime,learner,note,trainer,att:'',type});
-  closeQA();
-  fbSave();
-  renderCalendar();
-  if(schedView==='list') renderSchedule();
-}
 
 function toggleAddForm(){
   addFormOpen=!addFormOpen;
@@ -1922,11 +2059,83 @@ function toggleAddForm(){
     document.getElementById('nf-learner').focus();
   }
 }
+// ── DUPLICATE LEARNER CHECK ───────────────────────────────────────────────
+let _pendingSlot = null; // holds the slot data waiting for user confirmation
+
+function findDuplicateSlots(learnerName){
+  // Search all days of current week for this learner (case-insensitive, normalised)
+  const norm = n => (n||'').toLowerCase().replace(/[_\-()]/g,' ').replace(/\s+/g,' ').trim();
+  const target = norm(learnerName);
+  const found = [];
+  DAYS.forEach(day=>{
+    (schedule[day]||[]).forEach(s=>{
+      if(!s.learner) return;
+      const sn = norm(s.learner);
+      // Match if same base name (first meaningful word matches)
+      const firstWord = t => t.split(' ')[0];
+      if(sn===target || (firstWord(sn)===firstWord(target) && firstWord(target).length>3)){
+        found.push({...s, day});
+      }
+    });
+  });
+  return found;
+}
+
+function showDupModal(learnerName, pendingSlotData){
+  _pendingSlot = pendingSlotData;
+  document.getElementById('dup-learner-name').textContent = learnerName;
+  const existing = findDuplicateSlots(learnerName);
+  const att = {'P':'✅ Present','A':'❌ Absent','NC':'🚫 NC','RS':'🔄 RS','':`⬜ Not marked`};
+  document.getElementById('dup-existing-slots').innerHTML =
+    '<div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:0.4rem;">Existing bookings this week</div>'+
+    existing.map(s=>{
+      const wd = getSlotWeekData(s.id);
+      return `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.22rem 0;">
+        <span style="color:var(--sib-blue);font-weight:700;min-width:34px">${s.day.substring(0,3)}</span>
+        <span style="font-weight:600;min-width:40px">${s.time}</span>
+        <span style="color:var(--muted);flex:1">${x(s.trainer||'—')}</span>
+        <span style="font-size:0.7rem">${att[wd.att]||att['']}</span>
+      </div>`;
+    }).join('');
+  document.getElementById('dup-modal').classList.add('open');
+}
+
+function dupContinue(){
+  document.getElementById('dup-modal').classList.remove('open');
+  if(_pendingSlot) _commitSlot(_pendingSlot);
+  _pendingSlot = null;
+}
+function dupCancel(){
+  document.getElementById('dup-modal').classList.remove('open');
+  _pendingSlot = null;
+}
+
+function _commitSlot(data){
+  if(!schedule[data.day]) schedule[data.day]=[];
+  schedule[data.day].push({
+    id:++slotId, time:data.time, learner:data.learner,
+    note:data.note, trainer:data.trainer, coTrainer:data.coTrainer,
+    att:'', type:data.type,
+    addedBy:data.addedBy, addedAt:data.addedAt
+  });
+  logEdit('Schedule','Added slot',`${data.learner} · ${data.day} ${data.time} · Trainer: ${data.trainer||'—'} · ${data.type||'Regular'}`);
+  if(data.source==='form'){
+    ['nf-learner','nf-note'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+    const t=document.getElementById('nf-time'); if(t) t.value='';
+    const c=document.getElementById('nf-cotrainer'); if(c) c.value='';
+  } else if(data.source==='qa'){
+    closeQA();
+  }
+  fbSave();
+  renderSchedule();
+  if(schedView==='calendar') renderCalendar();
+}
+
 function submitSlot(){
   const time=document.getElementById('nf-time').value;
   const learner=document.getElementById('nf-learner').value.trim();
   if(!time||!learner){alert('Please select a time slot and enter learner name');return;}
-  // Enforce max 4 sessions per time slot
+  // Max 4 per time slot
   const slotsAtTime=(schedule[currentDay]||[]).filter(s=>s.time===time);
   if(slotsAtTime.length>=4){
     alert('⚠️ Slot not available — this time slot already has 4 sessions booked. Please choose a different time.');
@@ -1936,16 +2145,41 @@ function submitSlot(){
   const trainer=document.getElementById('nf-trainer').value;
   const coTrainer=document.getElementById('nf-cotrainer').value||'';
   const type=document.getElementById('nf-type').value||'Regular';
-  const addedBy = currentUser ? currentUser.email : 'unknown';
-  if(!schedule[currentDay])schedule[currentDay]=[];
-  schedule[currentDay].push({id:++slotId,time,learner,note,trainer,coTrainer,att:'',type,addedBy,addedAt:new Date().toISOString()});
-  ['nf-learner','nf-note'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('nf-time').value='';
-  document.getElementById('nf-cotrainer').value='';
-  fbSave();
-  renderSchedule();
+  // Message slot conflict warning
+  if(trainer){
+    const conflict=getMsgSlotConflict(trainer, currentDay, time);
+    if(conflict){
+      const ok=confirm(`⚠️ ${trainer} is assigned to a Message Slot (${conflict.from}–${conflict.to}) that covers ${time}.\n\nDo you still want to assign them to this session?`);
+      if(!ok) return;
+    }
+  }
+  const addedBy=currentUser?currentUser.email:'unknown';
+  const slotData={day:currentDay, time, learner, note, trainer, coTrainer, type, addedBy, addedAt:new Date().toISOString(), source:'form'};
+  // Check for duplicate learner this week
+  const dups = findDuplicateSlots(learner);
+  if(dups.length>0){
+    showDupModal(learner, slotData);
+    return;
+  }
+  _commitSlot(slotData);
 }
-function renderStats(){
+
+function submitQA(){
+  const learner=document.getElementById('qa-learner').value.trim();
+  if(!learner){alert('Please enter a learner name');return;}
+  const trainer=document.getElementById('qa-trainer').value;
+  const type=document.getElementById('qa-type').value||'Regular';
+  const note=document.getElementById('qa-note').value.trim();
+  const addedBy=currentUser?currentUser.email:'unknown';
+  const slotData={day:qaDay, time:qaTime, learner, note, trainer, coTrainer:'', type, addedBy, addedAt:new Date().toISOString(), source:'qa'};
+  // Check for duplicate learner this week
+  const dups = findDuplicateSlots(learner);
+  if(dups.length>0){
+    showDupModal(learner, slotData);
+    return;
+  }
+  _commitSlot(slotData);
+}
   const s=schedule[currentDay]||[];
   const total=s.filter(x=>x.learner).length;
   const p=s.filter(x=>getSlotWeekData(x.id).att==='P').length;
@@ -2027,27 +2261,40 @@ function renderNoteText(text){
 
 // --- NOTIFICATIONS -------------------------------------------------------
 function addNotification(toTrainerName, fromEmail, noteText, learnerName){
-  const key=toTrainerName.toLowerCase().replace(/\s+/g,'_');
-  if(!notifications[key])notifications[key]=[];
+  // Key is the trainer name normalised — consistent, no email guessing needed
+  const key = toTrainerName.toLowerCase().replace(/\s+/g,'_');
+  if(!notifications[key]) notifications[key]=[];
   const ts=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short'})+' '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
   notifications[key].push({
-    id:Date.now()+'_'+Math.random().toString(36).substr(2,5),
-    from:fromEmail||'someone',
-    msg:`Tagged you in notes for "${learnerName}": ${noteText.substring(0,80)}${noteText.length>80?'…':''}`,
-    ts, read:false, learnerName
+    id: Date.now()+'_'+Math.random().toString(36).substr(2,5),
+    from: fromEmail||'someone',
+    msg: `@${toTrainerName} — "${noteText.substring(0,80)}${noteText.length>80?'…':''}" (re: ${learnerName||'session'})`,
+    ts, read:false, learnerName, toTrainerName
   });
 }
+
+function getMyTrainerName(){
+  // Map logged-in email to a trainer name by checking email prefix against trainer list
+  if(!currentUser) return null;
+  const emailUser = currentUser.email.split('@')[0].toLowerCase().replace(/[._]/g,' ').trim();
+  // 1. Exact match on normalised name
+  let match = trainers.find(t => t.toLowerCase() === emailUser);
+  if(match) return match;
+  // 2. Email starts with trainer's first name (e.g. "ayushi.rai@..." → "Ayushi Rai")
+  match = trainers.find(t => {
+    const tl = t.toLowerCase();
+    const firstWord = tl.split(' ')[0];
+    return emailUser.startsWith(firstWord) || firstWord.startsWith(emailUser.split(' ')[0]);
+  });
+  return match || null;
+}
+
 function getMyNotifications(){
   if(!currentUser) return [];
-  const emailUser=currentUser.email.split('@')[0].toLowerCase();
-  // Match key by email username or trainer name
-  const myKey=Object.keys(notifications).find(k=>{
-    const kFlat=k.replace(/_/g,' ');
-    return kFlat===emailUser ||
-      trainers.some(t=>t.toLowerCase().replace(/\s+/g,'_')===k &&
-        (t.toLowerCase().startsWith(emailUser)||emailUser.startsWith(t.toLowerCase().split(' ')[0])));
-  });
-  return myKey?(notifications[myKey]||[]):[];
+  const myTrainerName = getMyTrainerName();
+  if(!myTrainerName) return [];
+  const key = myTrainerName.toLowerCase().replace(/\s+/g,'_');
+  return notifications[key] || [];
 }
 function renderNotifBell(){
   const unread=getMyNotifications().filter(n=>!n.read).length;
@@ -2088,7 +2335,46 @@ document.addEventListener('click',e=>{
     const p=document.getElementById('notif-panel');
     if(p)p.classList.remove('open');
   }
+  if(!e.target.closest('#history-btn')&&!e.target.closest('#history-panel')){
+    const hp=document.getElementById('history-panel');
+    if(hp) hp.style.display='none';
+  }
 });
+
+// ── EDIT HISTORY PANEL ────────────────────────────────────────────────────
+const SECTION_COLORS={
+  'Schedule':'#29ABE2','Attendance':'#22c55e','Message Slots':'#F7C325',
+  'Tasks':'#F26522','Tracker':'#a78bfa','Comments':'#2dd4bf','Other':'#9EA3A8'
+};
+function toggleHistoryPanel(){
+  const panel=document.getElementById('history-panel');
+  const isOpen=panel.style.display==='block';
+  panel.style.display=isOpen?'none':'block';
+  if(!isOpen) renderHistoryPanel();
+}
+function renderHistoryPanel(){
+  const filter=document.getElementById('history-filter')?document.getElementById('history-filter').value:'';
+  const list=document.getElementById('history-list');
+  let entries = filter ? editHistory.filter(e=>e.section===filter) : editHistory;
+  if(!entries.length){
+    list.innerHTML='<div style="padding:1.2rem;text-align:center;font-size:0.75rem;color:var(--muted);">No edits recorded'+(filter?' for '+filter:'')+'</div>';
+    return;
+  }
+  list.innerHTML = entries.slice(0,120).map(e=>{
+    const col = SECTION_COLORS[e.section]||'#9EA3A8';
+    return `<div style="padding:0.55rem 0.9rem;border-bottom:1px solid var(--border);display:flex;gap:0.55rem;align-items:flex-start;">
+      <div style="flex-shrink:0;width:6px;height:6px;border-radius:50%;background:${col};margin-top:5px;"></div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:0.35rem;flex-wrap:wrap;margin-bottom:0.1rem;">
+          <span style="font-size:0.62rem;background:${col}22;color:${col};padding:0.05rem 0.3rem;border-radius:3px;font-weight:600;">${x(e.section)}</span>
+          <span style="font-size:0.7rem;font-weight:600;color:var(--text);">${x(e.action)}</span>
+        </div>
+        <div style="font-size:0.73rem;color:var(--muted);line-height:1.4;">${x(e.detail)}</div>
+        <div style="font-size:0.6rem;color:var(--faint);margin-top:0.18rem;">${x(e.user)} · ${x(e.ts)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
 
 // --- NOTES MODAL ---------------------------------------------------------
 function openNotes(slotId,learnerName){
@@ -2149,8 +2435,8 @@ function addNote(){
   });
   ta.value='';
   hideMentionSuggestions();
-  // Fire notifications for any @tagged trainers
   const learnerName=document.getElementById('modal-learner').textContent;
+  logEdit('Comments','Added note',`${learnerName||'learner'} · "${text.substring(0,60)}${text.length>60?'…':''}"`);
   parseTaggedUsers(text).forEach(trainerName=>{
     addNotification(trainerName, authorEmail, text, learnerName);
   });
@@ -2169,7 +2455,7 @@ function delNote(i){
   learnerNotes[activeNoteId].splice(i,1);
   fbSave(); renderNotesList();
 }
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeNotes();closeQA();closeRSModal();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeNotes();closeQA();closeRSModal();if(_pendingSlot){dupCancel();}}});
 
 // --- LECTURE TRACKER -----------------------------------------------------
 let currentTrackerDay = ''; // '' = All Days
@@ -2429,14 +2715,87 @@ document.addEventListener('click', function(e){
 function delFromTracker(id){setWTracker(wTracker().filter(l=>l.id!==id));fbSave();renderTracker();}
 
 // --- TRAINER REPORT ------------------------------------------------------
+// Convert message slot time string like "2pm", "7:30pm", "12am" → minutes
+function tminMsg(t){
+  if(!t) return -1;
+  t = t.trim().toLowerCase();
+  const pm = t.includes('pm');
+  const am = t.includes('am');
+  const clean = t.replace(/[apm]/g,'').trim();
+  const parts = clean.split(':');
+  let h = parseInt(parts[0])||0;
+  let m = parseInt(parts[1])||0;
+  if(pm && h!==12) h+=12;
+  if(am && h===12) h=0;
+  return h*60+m;
+}
+
+// Returns the message slot (if any) that covers the given session time for this trainer on this day
+function getMsgSlotConflict(trainerName, day, sessionTimeStr){
+  if(!trainerName || !day || !sessionTimeStr) return null;
+  const msgSlotsForDay = (wMsgSlots()[day])||[];
+  const sessionMin = tmin(sessionTimeStr);
+  return msgSlotsForDay.find(ms=>{
+    const tArr = (ms.trainers&&ms.trainers.length) ? ms.trainers : (ms.trainer?[ms.trainer]:[]);
+    if(!tArr.includes(trainerName)) return false;
+    const fromMin = tminMsg(ms.from);
+    const toMin   = tminMsg(ms.to);
+    // Handle overnight slots (e.g. 7:30pm → 12am)
+    if(fromMin > toMin){
+      return sessionMin >= fromMin || sessionMin < toMin;
+    }
+    return sessionMin >= fromMin && sessionMin < toMin;
+  }) || null;
+}
+let trainerView = 'day';
+
+function setTrainerView(v){
+  trainerView = v;
+  document.getElementById('tr-day-view').style.display    = v==='day'   ? '' : 'none';
+  document.getElementById('tr-month-view').style.display  = v==='month' ? '' : 'none';
+  document.getElementById('tr-day-controls').style.display   = v==='day'   ? 'flex' : 'none';
+  document.getElementById('tr-month-controls').style.display = v==='month' ? 'flex' : 'none';
+  const db=document.getElementById('tr-view-day'), mb=document.getElementById('tr-view-month');
+  db.style.background=v==='day'?'var(--sib-blue)':'none'; db.style.color=v==='day'?'white':'var(--muted)';
+  mb.style.background=v==='month'?'var(--sib-blue)':'none'; mb.style.color=v==='month'?'white':'var(--muted)';
+  if(v==='month') renderMonthlyReport();
+  else renderTrainerCards();
+}
+
 function renderTrainerCards(){
-  document.getElementById('trainer-cards').innerHTML=trainers.map((t,i)=>{
+  // Update week label
+  const wlbl=document.getElementById('tr-week-lbl');
+  if(wlbl) wlbl.textContent=fmtWeekRange(currentWeekKey);
+  // Update trainer filter dropdown
+  const tf=document.getElementById('tr-log-filter');
+  if(tf){
+    const tv=tf.value;
+    tf.innerHTML='<option value="">All Trainers</option>'+trainers.map(t=>'<option'+(tv===t?' selected':'')+'>'+x(t)+'</option>').join('');
+    tf.value=tv;
+  }
+  const filterTrainer = tf ? tf.value : '';
+
+  const shownTrainers = filterTrainer ? trainers.filter(t=>t===filterTrainer) : trainers;
+  document.getElementById('trainer-cards').innerHTML=shownTrainers.map((t,idx)=>{
+    const i=trainers.indexOf(t);
     const all=DAYS.flatMap(d=>(schedule[d]||[]).filter(s=>s.trainer===t||s.trainer==='All'||s.coTrainer===t));
     const tot=all.filter(s=>s.learner).length;
     const p=all.filter(s=>getSlotWeekData(s.id).att==='P').length;
     const a=all.filter(s=>getSlotWeekData(s.id).att==='A').length;
+    const nc=all.filter(s=>getSlotWeekData(s.id).att==='NC').length;
+    const rs=all.filter(s=>getSlotWeekData(s.id).att==='RS').length;
     const coCount=DAYS.flatMap(d=>(schedule[d]||[]).filter(s=>s.coTrainer===t&&s.learner)).length;
     const col=TCOLORS[i%TCOLORS.length];
+    // Day breakdown for this week
+    const dayBreakdown=DAYS.map(d=>{
+      const daySessions=(schedule[d]||[]).filter(s=>s.trainer===t||s.trainer==='All'||s.coTrainer===t).filter(s=>s.learner);
+      if(!daySessions.length) return '';
+      const dp=daySessions.filter(s=>getSlotWeekData(s.id).att==='P').length;
+      return '<span style="font-size:0.62rem;background:var(--s3);border-radius:4px;padding:0.12rem 0.35rem;color:var(--muted)">'+
+        d.substring(0,3)+': <strong style="color:var(--text)">'+daySessions.length+'</strong>'+
+        (dp?'<span style="color:#22c55e;margin-left:2px">'+dp+'P</span>':'')+
+      '</span>';
+    }).filter(Boolean).join('');
     return '<div class="tr-card">'+
       '<div class="tr-card-head">'+
         '<div class="tr-avatar" style="background:'+col+'">'+initials(t)+'</div>'+
@@ -2448,19 +2807,18 @@ function renderTrainerCards(){
         '<div class="tcs"><div class="tcs-n" style="color:#22c55e">'+p+'</div><div class="tcs-l">Present</div></div>'+
         '<div class="tcs"><div class="tcs-n" style="color:#ef4444">'+a+'</div><div class="tcs-l">Absent</div></div>'+
       '</div>'+
+      (dayBreakdown?'<div style="display:flex;flex-wrap:wrap;gap:0.28rem;margin-top:0.5rem;padding-top:0.5rem;border-top:1px solid var(--border)">'+dayBreakdown+'</div>':'')+
     '</div>';
   }).join('');
   renderTrainerLog();
 }
+
 function renderTrainerLog(){
-  const f=document.getElementById('tr-log-filter').value;
-  const tf=document.getElementById('tr-log-filter');
-  const tv=tf.value;
-  tf.innerHTML='<option value="">All Trainers</option>'+trainers.map(t=>'<option'+(tv===t?' selected':'')+'>'+x(t)+'</option>').join('');
+  const f = document.getElementById('tr-log-filter') ? document.getElementById('tr-log-filter').value : '';
   const all=DAYS.flatMap(d=>(schedule[d]||[]).map(s=>({...s,day:d})));
   const rows=all.filter(s=>s.learner&&(!f||s.trainer===f||s.coTrainer===f)).sort((a,b)=>DAYS.indexOf(a.day)-DAYS.indexOf(b.day)||tmin(a.time)-tmin(b.time));
   const body=document.getElementById('trainer-log');
-  if(!rows.length){body.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No sessions found.</td></tr>';return;}
+  if(!rows.length){body.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No sessions found.</td></tr>';return;}
   const ab={'P':'<span class="pill pill-green">P</span>','A':'<span class="pill pill-red">A</span>','NC':'<span class="pill pill-amber">NC</span>','RS':'<span class="pill" style="background:rgba(167,139,250,0.14);color:#a78bfa">RS</span>'};
   body.innerHTML=rows.map(s=>{
     const att=getSlotWeekData(s.id).att;
@@ -2470,9 +2828,170 @@ function renderTrainerLog(){
     '<td style="font-weight:600">'+x(s.time)+'</td>'+
     '<td>'+x(s.learner)+'</td>'+
     '<td><span style="display:inline-flex;align-items:center;gap:0.28rem;flex-wrap:wrap"><span style="display:inline-flex;align-items:center;gap:0.28rem"><span style="width:7px;height:7px;border-radius:50%;background:'+tc(s.trainer)+';display:inline-block"></span>'+x(s.trainer||'')+'</span>'+coTag+'</span></td>'+
-    '<td>'+(ab[att]||'<span style="color:var(--faint)"></span>')+'</td>'+
+    '<td>'+(ab[att]||'<span style="color:var(--faint)">—</span>')+'</td>'+
     '<td><span style="font-size:0.69rem;background:var(--s2);padding:0.12rem 0.4rem;border-radius:4px;color:var(--muted)">'+x(s.type||'Regular')+'</span></td>'+
-  '</tr>';}).join('');
+    '</tr>';
+  }).join('');
+}
+
+// ── MONTHLY REPORT ────────────────────────────────────────────────────────
+function getMonthOptions(){
+  // Collect all week keys across scheduleByWeek
+  const months = new Set();
+  Object.keys(scheduleByWeek).forEach(wk=>{
+    const d = new Date(wk+'T00:00:00');
+    months.add(d.getFullYear()+'-'+(d.getMonth()+1).toString().padStart(2,'0'));
+  });
+  // Always include current month
+  const now = new Date();
+  months.add(now.getFullYear()+'-'+(now.getMonth()+1).toString().padStart(2,'0'));
+  return [...months].sort().reverse();
+}
+
+function fmtMonthLabel(ym){ // "2026-03" → "March 2026"
+  const [y,m]=ym.split('-');
+  return new Date(+y,+m-1,1).toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+}
+
+function getAllSessionsForMonth(ym){
+  // ym = "2026-03"
+  const [y,m] = ym.split('-').map(Number);
+  const results = [];
+  Object.keys(scheduleByWeek).forEach(wk=>{
+    const wkDate = new Date(wk+'T00:00:00');
+    // Include week if any day of the week falls in this month
+    // Check Mon through Sun+6 days
+    let hasDay = false;
+    for(let i=0;i<7;i++){
+      const d2=new Date(wkDate); d2.setDate(wkDate.getDate()+i);
+      if(d2.getFullYear()===y && d2.getMonth()+1===m){ hasDay=true; break; }
+    }
+    if(!hasDay) return;
+    const weekSched = scheduleByWeek[wk];
+    DAYS.forEach((day,di)=>{
+      (weekSched[day]||[]).forEach(s=>{
+        if(!s.learner) return;
+        // Compute actual date for this slot
+        const slotDate = new Date(wkDate);
+        slotDate.setDate(wkDate.getDate()+di);
+        // Only include if this date is actually in the target month
+        if(slotDate.getFullYear()!==y || slotDate.getMonth()+1!==m) return;
+        results.push({...s, day, weekKey:wk, slotDate:slotDate.toISOString().split('T')[0]});
+      });
+    });
+  });
+  return results.sort((a,b)=>a.slotDate.localeCompare(b.slotDate)||tmin(a.time)-tmin(b.time));
+}
+
+function renderMonthlyReport(){
+  // Populate month selector
+  const msel = document.getElementById('tr-month-sel');
+  const curVal = msel.value;
+  const opts = getMonthOptions();
+  msel.innerHTML = opts.map(o=>`<option value="${o}"${o===curVal?' selected':''}>${fmtMonthLabel(o)}</option>`).join('');
+  if(!msel.value && opts.length) msel.value = opts[0];
+  const ym = msel.value || opts[0];
+
+  // Populate trainer filter
+  const mtf = document.getElementById('tr-month-trainer');
+  const mtv = mtf.value;
+  mtf.innerHTML = '<option value="">All Trainers</option>'+trainers.map(t=>`<option${mtv===t?' selected':''}>${x(t)}</option>`).join('');
+  mtf.value = mtv;
+  const filterT = mtf.value;
+
+  const allSessions = getAllSessionsForMonth(ym);
+  const filtered = filterT ? allSessions.filter(s=>s.trainer===filterT||s.coTrainer===filterT) : allSessions;
+
+  // Summary cards per trainer
+  const ab={'P':'P','A':'A','NC':'NC','RS':'RS','':`—`};
+  const abColor={'P':'#22c55e','A':'#ef4444','NC':'#F7C325','RS':'#a78bfa','':`var(--faint)`};
+
+  const cards = document.getElementById('monthly-summary-cards');
+  const shownTrainers = filterT ? [filterT] : trainers;
+  cards.innerHTML = shownTrainers.map(t=>{
+    const ti = trainers.indexOf(t);
+    const col = TCOLORS[ti%TCOLORS.length];
+    const tSessions = allSessions.filter(s=>s.trainer===t||s.trainer==='All'||s.coTrainer===t);
+    const tot = tSessions.length;
+    if(!tot && !filterT) return ''; // hide zero-session trainers unless filtered
+    const attData = tSessions.map(s=>{
+      const wkStore = allWeekData[s.weekKey];
+      if(wkStore && wkStore.attData && wkStore.attData[s.id]) return wkStore.attData[s.id].att||'';
+      return '';
+    });
+    const p = attData.filter(a=>a==='P').length;
+    const a = attData.filter(a=>a==='A').length;
+    const nc = attData.filter(a=>a==='NC').length;
+    const rs = attData.filter(a=>a==='RS').length;
+    const pct = tot>0?Math.round(p/tot*100):0;
+    const barColor = pct>=75?'#22c55e':pct>=50?'#F7C325':'#ef4444';
+    return `<div class="tr-card">
+      <div class="tr-card-head">
+        <div class="tr-avatar" style="background:${col}">${initials(t)}</div>
+        <div>
+          <div class="tr-card-name">${x(t)}</div>
+          <div class="tr-card-role" style="color:var(--muted)">${fmtMonthLabel(ym)}</div>
+        </div>
+      </div>
+      <div class="tr-card-stats">
+        <div class="tcs"><div class="tcs-n">${tot}</div><div class="tcs-l">Sessions</div></div>
+        <div class="tcs"><div class="tcs-n" style="color:#22c55e">${p}</div><div class="tcs-l">Present</div></div>
+        <div class="tcs"><div class="tcs-n" style="color:#ef4444">${a}</div><div class="tcs-l">Absent</div></div>
+      </div>
+      <div style="margin-top:0.5rem;padding-top:0.5rem;border-top:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;font-size:0.62rem;color:var(--muted);margin-bottom:0.25rem;">
+          <span>Attendance rate</span><span style="color:${barColor};font-weight:700">${pct}%</span>
+        </div>
+        <div style="background:var(--s3);border-radius:4px;height:5px;overflow:hidden;">
+          <div style="width:${pct}%;height:100%;background:${barColor};border-radius:4px;transition:width 0.4s"></div>
+        </div>
+        <div style="display:flex;gap:0.35rem;flex-wrap:wrap;margin-top:0.42rem;">
+          ${nc?`<span style="font-size:0.6rem;background:rgba(247,195,37,0.12);color:#F7C325;padding:0.1rem 0.35rem;border-radius:3px">${nc} NC</span>`:''}
+          ${rs?`<span style="font-size:0.6rem;background:rgba(167,139,250,0.12);color:#a78bfa;padding:0.1rem 0.35rem;border-radius:3px">${rs} RS</span>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).filter(Boolean).join('');
+
+  // Monthly log table
+  const body = document.getElementById('monthly-log');
+  const badge = document.getElementById('monthly-total-badge');
+  if(badge) badge.textContent = filtered.length+' sessions · '+fmtMonthLabel(ym);
+
+  if(!filtered.length){
+    body.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem;font-style:italic">No sessions found for this month.</td></tr>';
+    return;
+  }
+
+  const pillStyle = {'P':'pill-green','A':'pill-red','NC':'pill-amber','RS':'pill-rs'};
+  const attLabels = {'P':'P','A':'A','NC':'NC','RS':'RS'};
+
+  // Group by week
+  const byWeek = {};
+  filtered.forEach(s=>{
+    if(!byWeek[s.weekKey]) byWeek[s.weekKey]=[];
+    byWeek[s.weekKey].push(s);
+  });
+
+  body.innerHTML = Object.keys(byWeek).sort().map(wk=>{
+    const wkSessions = byWeek[wk];
+    const wkLabel = 'Week of '+fmtWeekRange(wk);
+    return wkSessions.map((s,i)=>{
+      const wkStore = allWeekData[wk];
+      const att = (wkStore&&wkStore.attData&&wkStore.attData[s.id]) ? (wkStore.attData[s.id].att||'') : '';
+      const coTag=s.coTrainer?`<span style="background:rgba(41,171,226,0.14);color:var(--sib-blue);border-radius:3px;padding:0.04rem 0.28rem;font-size:0.62rem;margin-left:4px">+${x(s.coTrainer)}</span>`:'';
+      const attPill = att ? `<span class="pill ${pillStyle[att]||''}">${att}</span>` : '<span style="color:var(--faint)">—</span>';
+      return `<tr${i===0?' style="border-top:2px solid var(--border)"':''}>
+        ${i===0?`<td rowspan="${wkSessions.length}" style="color:var(--sib-blue);font-size:0.68rem;font-weight:600;vertical-align:top;padding-top:0.7rem;white-space:nowrap">${wkLabel}</td>`:''}
+        <td style="color:var(--muted)">${s.day.substring(0,3)} ${s.slotDate?s.slotDate.substring(5).replace('-','/'):''}  </td>
+        <td style="font-weight:600">${x(s.time)}</td>
+        <td>${x(s.learner)}</td>
+        <td><span style="display:inline-flex;align-items:center;gap:0.28rem"><span style="width:7px;height:7px;border-radius:50%;background:${tc(s.trainer)};display:inline-block"></span>${x(s.trainer||'')}${coTag}</span></td>
+        <td>${attPill}</td>
+        <td><span style="font-size:0.69rem;background:var(--s2);padding:0.12rem 0.4rem;border-radius:4px;color:var(--muted)">${x(s.type||'Regular')}</span></td>
+      </tr>`;
+    }).join('');
+  }).join('');
 }
 
 // --- MESSAGE SLOTS --------------------------------------------------------
@@ -2507,10 +3026,21 @@ function renderMsgBody(){
   updateWA();
 }
 function upMsg(id,f,v){
-  for(const d of DAYS){const s=(wMsgSlots()[d]||[]).find(x=>x.id===id);if(s){s[f]=v;fbSave();break;}}
+  for(const d of DAYS){
+    const s=(wMsgSlots()[d]||[]).find(x=>x.id===id);
+    if(s){
+      const fieldLabel={notes:'Notes',from:'From time',to:'To time',trainer:'Trainer'}[f]||f;
+      logEdit('Message Slots',`Changed ${fieldLabel}`,`Slot ${s.from||id} · "${s[f]||'—'}" → "${v||'—'}"`);
+      s[f]=v;fbSave();break;
+    }
+  }
   updateWA(); renderMsgStats();
 }
 function delMsg(id){
+  for(const d of DAYS){
+    const s=(wMsgSlots()[d]||[]).find(x=>x.id===id);
+    if(s){logEdit('Message Slots','Deleted slot',`${s.from||''}–${s.to||''} · ${(s.trainers||[]).join(', ')||s.trainer||'unassigned'}`);break;}
+  }
   for(const d of DAYS){wMsgSlots()[d]=(wMsgSlots()[d]||[]).filter(x=>x.id!==id);}
   fbSave();
   renderMsgBody();
@@ -2548,12 +3078,15 @@ function toggleMsgTrainer(slotId, trainerName){
   if(!slot) return;
   if(!slot.trainers) slot.trainers=[];
   const idx = slot.trainers.indexOf(trainerName);
+  const action = idx>=0 ? 'Removed trainer' : 'Added trainer';
   if(idx>=0) slot.trainers.splice(idx,1); else slot.trainers.push(trainerName);
+  logEdit('Message Slots',action,`${trainerName} · slot ${slot.from||''}–${slot.to||''}`);
   fbSave(); renderMsgBody(); renderMsgStats();
 }
 function removeMsgTrainer(slotId, trainerName){
   const slot = DAYS.flatMap(d=>wMsgSlots()[d]||[]).find(s=>s.id===slotId);
   if(!slot||!slot.trainers) return;
+  logEdit('Message Slots','Removed trainer',`${trainerName} · slot ${slot.from||''}–${slot.to||''}`);
   slot.trainers = slot.trainers.filter(t=>t!==trainerName);
   fbSave(); renderMsgBody(); renderMsgStats();
 }
@@ -2680,11 +3213,16 @@ function exportCSV(){
 
 function toggleMsgDone(id){
   const cur=getMsgDone(id);
+  // Find slot label
+  let slotLabel=id;
+  for(const d of DAYS){const s=(wMsgSlots()[d]||[]).find(x=>x.id===id);if(s){slotLabel=`${s.from||''}–${s.to||''} (${currentMsgDay})`;break;}}
   if(cur.done){
+    logEdit('Message Slots','Unmarked done',slotLabel);
     setMsgDone(id,false,null);
   } else {
     const now=new Date();
     const ts=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    logEdit('Message Slots','Marked done',`${slotLabel} at ${ts}`);
     setMsgDone(id,true,ts);
   }
   renderMsgBody(); renderMsgStats();
@@ -2768,13 +3306,19 @@ function renderTaskSections(){
 
 function upTask(cat,id,field,val){
   const t=(wTasks()[cat]||[]).find(t=>t.id===id);
-  if(t){t[field]=val;fbSave();}
+  if(t){
+    const fieldLabel={assign:'Assignee',date:'Date',delay:'Delay reason',name:'Task name'}[field]||field;
+    logEdit('Tasks',`Updated ${fieldLabel}`,`"${t.name}" · ${cat} · "${t[field]||'—'}" → "${val||'—'}"`);
+    t[field]=val;fbSave();
+  }
   renderTaskStats();
 }
 
 function upTaskStatus(cat,id,sel){
   const t=(wTasks()[cat]||[]).find(t=>t.id===id);
   if(t){
+    const statusLabel={pending:'Pending',inprogress:'In Progress',done:'Done'}[sel.value]||sel.value;
+    logEdit('Tasks','Changed status',`"${t.name}" · ${cat} · → ${statusLabel}`);
     t.status=sel.value;
     sel.className='status-sel status-'+sel.value;
     const row=sel.closest('.task-row');
@@ -2792,6 +3336,7 @@ function delTask(cat,id){
     alert('You can only delete tasks you created.');
     return;
   }
+  logEdit('Tasks','Deleted task',`"${task.name}" · ${cat}`);
   wTasks()[cat]=(wTasks()[cat]||[]).filter(t=>t.id!==id);
   fbSave();
   renderTaskSections();
@@ -2800,7 +3345,9 @@ function delTask(cat,id){
 function addInlineTask(cat){
   wTasks()[cat]=wTasks()[cat]||[];
   const today=new Date().toISOString().split('T')[0];
-  wTasks()[cat].push({id:'t'+(++taskId),name:'New Task',assign:'',date:today,status:'pending',delay:'',createdBy:currentUser?currentUser.email:''});
+  const newTask={id:'t'+(++taskId),name:'New Task',assign:'',date:today,status:'pending',delay:'',createdBy:currentUser?currentUser.email:''};
+  wTasks()[cat].push(newTask);
+  logEdit('Tasks','Added task',`"New Task" · ${cat}`);
   fbSave();
   renderTaskSections();
 }
@@ -2829,6 +3376,7 @@ function submitAddTask(){
     createdBy: currentUser ? currentUser.email : ''
   });
   closeAddTaskModal();
+  logEdit('Tasks','Added task',`"${name}" · ${cat} · Assigned to: ${document.getElementById('at-assign').value.trim()||'—'}`);
   fbSave();
   renderTaskSections();
   if(taskView==='calendar')renderTaskCalendar();
