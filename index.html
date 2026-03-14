@@ -1212,9 +1212,6 @@ tr:hover td{background:rgba(41,171,226,0.03);}
 // ═══════════════════════════════════════════════════════════════════════════
 let db = null;
 let fbConnected = false;
-let _isSaving = false;
-let _listenSkipCount = 0;
-let _saveTimer = null;
 const LS_CONFIG_KEY = 'sib_firebase_config';
 
 function setSyncStatus(state, text){
@@ -1226,40 +1223,96 @@ function setSyncStatus(state, text){
   if(txt){ txt.textContent = text; }
 }
 
-// Call this after every write operation to push state to Firebase
+// ── FIREBASE SYNC ─────────────────────────────────────────────────────────
+// Use a write counter instead of a time-based flag.
+// Every time WE write, we increment _myWriteCount.
+// The listener checks if the incoming snap is one of our own writes and skips it.
+let _saveTimer = null;
+let _myWriteCount = 0;      // how many writes WE have pending/in-flight
+let _pendingWriteCount = 0; // incremented before write, decremented after
+
 function fbSave(){
   if(!db || !fbConnected) return;
   if(_saveTimer) clearTimeout(_saveTimer);
-  _isSaving = true; // block listener immediately
   setSyncStatus('syncing','Saving…');
   _saveTimer = setTimeout(()=>{
     _saveTimer = null;
-    const userWeeks = {};
-    Object.keys(scheduleByWeek).forEach(wk=>{
-      if(wk === '2026-03-02') return;
-      userWeeks[wk] = {};
-      DAYS.forEach(d=>{
-        // Always strip deleted IDs before writing — belt AND suspenders
-        userWeeks[wk][d] = (scheduleByWeek[wk][d]||[]).filter(s=>!deletedSlotIds.has(Number(s.id)));
-      });
+    _doWrite();
+  }, 600);
+}
+
+function _buildPayload(){
+  const userWeeks = {};
+  Object.keys(scheduleByWeek).forEach(wk=>{
+    if(wk === '2026-03-02') return;
+    userWeeks[wk] = {};
+    DAYS.forEach(d=>{
+      userWeeks[wk][d] = (scheduleByWeek[wk][d]||[]).filter(s=>!deletedSlotIds.has(Number(s.id)));
     });
-    const payload = {
-      trainers, userWeeks, allWeekData, learnerNotes, notifications,
-      editHistory, extRecords, extId,
-      slotId, msgId, trackerId, taskId,
-      deletedSlotIds: [...deletedSlotIds],
-    };
-    db.ref('skillinabox/data').set(payload)
-      .then(()=>{
-        setSyncStatus('saved','All changes saved ✓');
-        setTimeout(()=>{ _isSaving = false; setSyncStatus('saved','Live sync on'); }, 2000);
-      })
-      .catch(e=>{
-        _isSaving = false;
-        setSyncStatus('error','Save failed — check connection');
-        console.error(e);
-      });
-  }, 800);
+  });
+  return {
+    trainers, userWeeks, allWeekData, learnerNotes, notifications,
+    editHistory, extRecords, extId,
+    slotId, msgId, trackerId, taskId,
+    deletedSlotIds: [...deletedSlotIds],
+  };
+}
+
+function _doWrite(){
+  if(!db || !fbConnected) return;
+  _pendingWriteCount++;          // mark: we have an in-flight write
+  const payload = _buildPayload();
+  db.ref('skillinabox/data').set(payload)
+    .then(()=>{
+      _pendingWriteCount = Math.max(0, _pendingWriteCount-1);
+      setSyncStatus('saved','All changes saved ✓');
+      setTimeout(()=>setSyncStatus('saved','Live sync on'), 1500);
+    })
+    .catch(e=>{
+      _pendingWriteCount = Math.max(0, _pendingWriteCount-1);
+      setSyncStatus('error','Save failed — check connection');
+      console.error(e);
+    });
+}
+
+// Immediate write — used by delSlot so deletion hits Firebase with no debounce
+function fbSaveNow(){
+  if(!db || !fbConnected) return;
+  if(_saveTimer){ clearTimeout(_saveTimer); _saveTimer=null; }
+  _doWrite();
+}
+
+function fbListen(){
+  db.ref('skillinabox/data').on('value', snap=>{
+    // If WE have a write in flight, this event is our own echo — skip it
+    if(_pendingWriteCount > 0) return;
+    const data = snap.val();
+    if(!data) return;
+    applyRemoteData(data);
+    renderAll();
+    if(typeof taskView!=='undefined' && taskView==='calendar') renderTaskCalendar();
+    if(typeof schedView!=='undefined' && schedView==='calendar') renderCalendar();
+    setSyncStatus('saved','Live sync on');
+  });
+}
+
+function delSlot(id){
+  if(!confirm('Remove this session?'))return;
+  const wk=scheduleByWeek[currentWeekKey];
+  if(!wk)return;
+  // Log before removing
+  const slot=findSlot(id);
+  logEdit('Schedule','Deleted slot',`${slot?slot.learner:'slot'} · ${currentDay} ${slot?slot.time:''} · Trainer: ${slot?slot.trainer||'—':'—'}`);
+  // Remove from every day in this week
+  for(const d of DAYS){wk[d]=(wk[d]||[]).filter(s=>s.id!==id);}
+  schedule=wk;
+  // Add to permanent blacklist
+  deletedSlotIds.add(Number(id));
+  // Re-render immediately so user sees the deletion
+  renderSchedule();
+  // Write to Firebase immediately — no debounce
+  fbSaveNow();
+  setSyncStatus('saved','Deleted ✓');
 }
 
 function deepMerge(target, source){
@@ -2038,41 +2091,6 @@ function getSlotsForLearner(trackerName){
     });
   });
   return ids;
-}
-function delSlot(id){
-  if(!confirm('Remove this session?'))return;
-  const wk=scheduleByWeek[currentWeekKey];
-  if(!wk)return;
-  // Log before removing
-  const slot = findSlot(id);
-  logEdit('Schedule','Deleted slot',`${slot?slot.learner:'slot'} · ${currentDay} ${slot?slot.time:''} · Trainer: ${slot?slot.trainer||'—':'—'}`);
-  for(const d of DAYS){wk[d]=(wk[d]||[]).filter(s=>s.id!==id);}
-  schedule=wk;
-  deletedSlotIds.add(Number(id));
-  renderSchedule();
-  // Write the deletion straight to Firebase — no debounce, no merge window
-  if(db && fbConnected){
-    _isSaving=true;
-    const userWeeks={};
-    Object.keys(scheduleByWeek).forEach(wkk=>{
-      if(wkk!=='2026-03-02') userWeeks[wkk]=scheduleByWeek[wkk];
-    });
-    // Strip deleted IDs from ALL days in ALL weeks before saving
-    Object.keys(userWeeks).forEach(wkk=>{
-      DAYS.forEach(d=>{
-        userWeeks[wkk][d]=(userWeeks[wkk][d]||[]).filter(s=>!deletedSlotIds.has(Number(s.id)));
-      });
-    });
-    const payload={
-      trainers, userWeeks, allWeekData, learnerNotes, notifications,
-      editHistory,
-      slotId, msgId, trackerId, taskId,
-      deletedSlotIds:[...deletedSlotIds]
-    };
-    db.ref('skillinabox/data').set(payload)
-      .then(()=>{ setTimeout(()=>{ _isSaving=false; setSyncStatus('saved','Live sync on'); },2000); setSyncStatus('saved','Deleted ✓'); })
-      .catch(e=>{ _isSaving=false; setSyncStatus('error','Delete failed'); console.error(e); });
-  }
 }
 let schedView = 'list'; // 'list' or 'calendar'
 let qaDay=null, qaTime=null;
