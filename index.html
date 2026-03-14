@@ -389,8 +389,25 @@ tr:hover td{background:rgba(41,171,226,0.03);}
 .login-forgot{font-size:0.7rem;color:#29ABE2;cursor:pointer;text-align:center;margin-top:0.75rem;opacity:0.8;}
 .login-forgot:hover{opacity:1;text-decoration:underline;}
 
-/* USER BADGE in header */
-#user-badge{display:flex;align-items:center;gap:0.5rem;font-size:0.72rem;color:#9EA3A8;}
+/* NOTIFICATIONS */
+#notif-bell{position:relative;background:none;border:1px solid var(--border);border-radius:7px;padding:0.32rem 0.55rem;cursor:pointer;font-size:0.88rem;color:var(--muted);transition:all 0.15s;}
+#notif-bell:hover{border-color:var(--sib-blue);color:var(--text);}
+#notif-count{position:absolute;top:-5px;right:-5px;background:var(--red);color:white;font-size:0.55rem;font-weight:700;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;display:none;}
+#notif-panel{position:absolute;top:calc(100% + 8px);right:0;width:320px;background:var(--s1);border:1px solid var(--border);border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,0.5);z-index:9000;display:none;max-height:380px;overflow-y:auto;}
+#notif-panel.open{display:block;}
+.notif-header{padding:0.65rem 0.9rem;border-bottom:1px solid var(--border);font-size:0.72rem;font-weight:700;color:var(--text);display:flex;justify-content:space-between;align-items:center;}
+.notif-item{padding:0.6rem 0.9rem;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.15s;}
+.notif-item:hover{background:var(--s2);}
+.notif-item.unread{border-left:3px solid var(--sib-blue);}
+.notif-item.unread .notif-msg{color:var(--text);}
+.notif-msg{font-size:0.75rem;color:var(--muted);line-height:1.4;}
+.notif-meta{font-size:0.62rem;color:var(--faint);margin-top:0.18rem;}
+.notif-empty{padding:1.2rem;text-align:center;font-size:0.75rem;color:var(--muted);}
+/* @mention autocomplete */
+#mention-suggestions{position:absolute;background:var(--s1);border:1px solid var(--sib-blue);border-radius:7px;z-index:9999;min-width:180px;box-shadow:0 8px 24px rgba(0,0,0,0.4);display:none;}
+.mention-opt{padding:0.42rem 0.75rem;font-size:0.78rem;cursor:pointer;color:var(--text);}
+.mention-opt:hover,.mention-opt.active{background:rgba(41,171,226,0.15);color:var(--sib-blue);}
+.note-tag{background:rgba(41,171,226,0.18);color:var(--sib-blue);border-radius:3px;padding:0.05rem 0.22rem;font-weight:600;font-size:0.9em;}
 #user-badge .user-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#29ABE2,#F26522);display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#fff;flex-shrink:0;}
 #logout-btn{background:none;border:1px solid rgba(239,68,68,0.3);border-radius:5px;color:#ef4444;font-size:0.65rem;padding:0.18rem 0.5rem;cursor:pointer;transition:all 0.15s;font-family:inherit;}
 #logout-btn:hover{background:rgba(239,68,68,0.1);}
@@ -550,6 +567,13 @@ tr:hover td{background:rgba(41,171,226,0.03);}
       <div id="sync-status-inline" style="font-size:0.68rem;color:#9EA3A8;display:flex;align-items:center;gap:0.35rem;">
         <span id="sync-dot" style="width:7px;height:7px;border-radius:50%;background:#22c55e;flex-shrink:0;display:inline-block;"></span>
         <span id="sync-text">Connecting…</span>
+      </div>
+      <div style="position:relative;">
+        <button id="notif-bell" onclick="toggleNotifPanel()" title="Notifications">🔔<span id="notif-count"></span></button>
+        <div id="notif-panel">
+          <div class="notif-header"><span>🔔 Notifications</span><button onclick="markAllNotifRead()" style="background:none;border:none;color:var(--sib-blue);font-size:0.65rem;cursor:pointer;">Mark all read</button></div>
+          <div id="notif-list"><div class="notif-empty">No notifications yet</div></div>
+        </div>
       </div>
       <button class="btn" onclick="exportCSV()">⬇ Export</button>
       <button class="btn btn-primary" onclick="flashSave()">✓ Save All</button>
@@ -917,7 +941,7 @@ tr:hover td{background:rgba(41,171,226,0.03);}
 
 <!-- NOTES MODAL -->
 <div class="modal-bg" id="notes-modal" onclick="if(event.target===this)closeNotes()">
-  <div class="modal">
+  <div class="modal" style="width:540px;">
     <div class="modal-hd">
       <div>
         <div class="modal-ttl">📝 Learner Notes</div>
@@ -926,13 +950,17 @@ tr:hover td{background:rgba(41,171,226,0.03);}
       <button class="modal-x" onclick="closeNotes()">✕</button>
     </div>
     <div class="notes-list" id="notes-list"></div>
-    <div class="note-input-row">
-      <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;width:130px;justify-content:center;">
-        <span style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);">Adding as</span>
-        <span id="note-author-lbl" style="font-size:0.72rem;color:var(--sib-blue);font-weight:600;word-break:break-all;"></span>
+    <div style="position:relative;">
+      <div class="note-input-row">
+        <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;width:130px;justify-content:center;">
+          <span style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);">Adding as</span>
+          <span id="note-author-lbl" style="font-size:0.72rem;color:var(--sib-blue);font-weight:600;word-break:break-all;"></span>
+          <span style="font-size:0.59rem;color:var(--faint);margin-top:2px;">Type @ to tag someone</span>
+        </div>
+        <textarea id="note-text" placeholder="Write a note… type @name to tag a trainer" oninput="onNoteInput(this)" onkeydown="onNoteKeydown(event)"></textarea>
+        <button class="note-add-btn" onclick="addNote()">Add</button>
       </div>
-      <textarea id="note-text" placeholder="Add a note about this learner's behaviour, progress, or feedback…"></textarea>
-      <button class="note-add-btn" onclick="addNote()">Add</button>
+      <div id="mention-suggestions"></div>
     </div>
   </div>
 </div>
@@ -973,6 +1001,7 @@ function fbSave(){
       userWeeks:   userWeeks,
       allWeekData: allWeekData,
       learnerNotes:learnerNotes,
+      notifications: notifications,
       slotId:      slotId,
       msgId:       msgId,
       trackerId:   trackerId,
@@ -1056,7 +1085,14 @@ function applyRemoteData(data){
   }
   // Deep merge allWeekData so nested week stores don't clobber each other
   if(data.allWeekData) deepMerge(allWeekData, data.allWeekData);
-  if(data.learnerNotes) deepMerge(learnerNotes, data.learnerNotes);
+  // learnerNotes: replace each slot's array directly — never deep-merge arrays
+  if(data.learnerNotes){
+    Object.keys(data.learnerNotes).forEach(k=>{
+      learnerNotes[k] = data.learnerNotes[k]; // direct replace preserves full array
+    });
+  }
+  // Notifications
+  if(data.notifications) Object.assign(notifications, data.notifications);
   if(data.slotId    && data.slotId    > slotId)    slotId    = data.slotId;
   if(data.msgId     && data.msgId     > msgId)     msgId     = data.msgId;
   if(data.trackerId && data.trackerId > trackerId) trackerId = data.trackerId;
@@ -1199,6 +1235,7 @@ let msgSlots=null; // not used directly anymore  always via wMsgSlots()
 
 
 let learnerNotes={};
+let notifications={}; // notifications[email] = [{id, msg, ts, read, slotId, learnerName}]
 let currentDay='Monday', currentMsgDay='Monday', activeNoteId=null;
 // slotId set below
 let slotId=1101, msgId=200, trackerId=100;
@@ -1599,22 +1636,149 @@ function renderStats(){
   ].map(([l,v,sc,vc],i)=>'<div class="stat-card" style="--sc:'+sc+'"><div class="stat-lbl">'+l+'</div><div class="stat-val" style="color:'+vc+'">'+v+'</div></div>').join('');
 }
 
+// --- @MENTION AUTOCOMPLETE -----------------------------------------------
+let _mentionStart=-1, _mentionActive=false, _mentionSel=0;
+
+function onNoteInput(ta){
+  const val=ta.value, pos=ta.selectionStart;
+  const before=val.substring(0,pos);
+  const atIdx=before.lastIndexOf('@');
+  if(atIdx>=0 && !before.substring(atIdx).includes(' ')){
+    _mentionActive=true; _mentionStart=atIdx;
+    showMentionSuggestions(before.substring(atIdx+1).toLowerCase());
+  } else {
+    _mentionActive=false; _mentionStart=-1;
+    hideMentionSuggestions();
+  }
+}
+function onNoteKeydown(e){
+  if(!_mentionActive) return;
+  const opts=document.getElementById('mention-suggestions').querySelectorAll('.mention-opt');
+  if(!opts.length) return;
+  if(e.key==='ArrowDown'){e.preventDefault();_mentionSel=Math.min(_mentionSel+1,opts.length-1);renderMentionSel(opts);}
+  else if(e.key==='ArrowUp'){e.preventDefault();_mentionSel=Math.max(_mentionSel-1,0);renderMentionSel(opts);}
+  else if(e.key==='Enter'){e.preventDefault();applyMention(opts[_mentionSel].dataset.name);}
+  else if(e.key==='Escape'){hideMentionSuggestions();}
+}
+function renderMentionSel(opts){opts.forEach((o,i)=>o.classList.toggle('active',i===_mentionSel));}
+function showMentionSuggestions(query){
+  const matches=trainers.filter(t=>t.toLowerCase().startsWith(query)||t.toLowerCase().includes(query)).slice(0,6);
+  const sug=document.getElementById('mention-suggestions');
+  _mentionSel=0;
+  if(!matches.length){sug.style.display='none';return;}
+  sug.style.display='block';
+  sug.innerHTML=matches.map((m,i)=>`<div class="mention-opt${i===0?' active':''}" data-name="${m}" onclick="applyMention('${m}')">@${m}</div>`).join('');
+}
+function hideMentionSuggestions(){
+  const sug=document.getElementById('mention-suggestions');
+  if(sug)sug.style.display='none';
+  _mentionActive=false;
+}
+function applyMention(name){
+  const ta=document.getElementById('note-text');
+  const before=ta.value.substring(0,_mentionStart);
+  const after=ta.value.substring(ta.selectionStart);
+  ta.value=before+'@'+name+' '+after;
+  const newPos=_mentionStart+name.length+2;
+  ta.setSelectionRange(newPos,newPos);
+  ta.focus();
+  hideMentionSuggestions();
+}
+function parseTaggedUsers(text){
+  const matches=[], re=/@([A-Za-z][A-Za-z0-9 ._]*)/g; let m;
+  while((m=re.exec(text))!==null){
+    const found=trainers.find(t=>t.toLowerCase()===m[1].trim().toLowerCase());
+    if(found&&!matches.includes(found))matches.push(found);
+  }
+  return matches;
+}
+function renderNoteText(text){
+  // Escape first, then re-highlight @mentions
+  return x(text).replace(/@([A-Za-z][A-Za-z0-9 ._]*)/g,(match,name)=>{
+    const found=trainers.find(t=>t.toLowerCase()===name.trim().toLowerCase());
+    return found?`<span class="note-tag">@${found}</span>`:match;
+  });
+}
+
+// --- NOTIFICATIONS -------------------------------------------------------
+function addNotification(toTrainerName, fromEmail, noteText, learnerName){
+  const key=toTrainerName.toLowerCase().replace(/\s+/g,'_');
+  if(!notifications[key])notifications[key]=[];
+  const ts=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short'})+' '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  notifications[key].push({
+    id:Date.now()+'_'+Math.random().toString(36).substr(2,5),
+    from:fromEmail||'someone',
+    msg:`Tagged you in notes for "${learnerName}": ${noteText.substring(0,80)}${noteText.length>80?'…':''}`,
+    ts, read:false, learnerName
+  });
+}
+function getMyNotifications(){
+  if(!currentUser) return [];
+  const emailUser=currentUser.email.split('@')[0].toLowerCase();
+  // Match key by email username or trainer name
+  const myKey=Object.keys(notifications).find(k=>{
+    const kFlat=k.replace(/_/g,' ');
+    return kFlat===emailUser ||
+      trainers.some(t=>t.toLowerCase().replace(/\s+/g,'_')===k &&
+        (t.toLowerCase().startsWith(emailUser)||emailUser.startsWith(t.toLowerCase().split(' ')[0])));
+  });
+  return myKey?(notifications[myKey]||[]):[];
+}
+function renderNotifBell(){
+  const unread=getMyNotifications().filter(n=>!n.read).length;
+  const c=document.getElementById('notif-count');
+  if(c){c.textContent=unread;c.style.display=unread>0?'flex':'none';}
+}
+function renderNotifPanel(){
+  const myNotifs=getMyNotifications().slice().reverse();
+  const list=document.getElementById('notif-list');
+  renderNotifBell();
+  if(!list)return;
+  if(!myNotifs.length){list.innerHTML='<div class="notif-empty">No notifications yet</div>';return;}
+  list.innerHTML=myNotifs.map(n=>
+    `<div class="notif-item${n.read?'':' unread'}" onclick="openNotifNote(${JSON.stringify(n.learnerName)})">
+      <div class="notif-msg">${x(n.msg)}</div>
+      <div class="notif-meta">from ${x(n.from.split('@')[0])} · ${n.ts}</div>
+    </div>`
+  ).join('');
+}
+function toggleNotifPanel(){
+  const panel=document.getElementById('notif-panel');
+  panel.classList.toggle('open');
+  if(panel.classList.contains('open'))renderNotifPanel();
+}
+function markAllNotifRead(){
+  getMyNotifications().forEach(n=>n.read=true);
+  fbSave(); renderNotifPanel();
+}
+function openNotifNote(learnerName){
+  document.getElementById('notif-panel').classList.remove('open');
+  for(const d of DAYS){
+    const slot=(schedule[d]||[]).find(s=>s.learner===learnerName);
+    if(slot){openNotes(slot.id,slot.learner);return;}
+  }
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#notif-bell')&&!e.target.closest('#notif-panel')){
+    const p=document.getElementById('notif-panel');
+    if(p)p.classList.remove('open');
+  }
+});
+
 // --- NOTES MODAL ---------------------------------------------------------
 function openNotes(slotId,learnerName){
   activeNoteId=slotId;
   document.getElementById('modal-learner').textContent=learnerName||'';
-  // Show who is adding this note (logged-in user)
-  const authorLbl = document.getElementById('note-author-lbl');
-  if(authorLbl){
-    const email = currentUser ? currentUser.email : 'unknown';
-    authorLbl.textContent = email;
-  }
-  syncAllDropdowns();
+  const authorLbl=document.getElementById('note-author-lbl');
+  if(authorLbl) authorLbl.textContent=currentUser?currentUser.email:'not logged in';
+  hideMentionSuggestions();
   renderNotesList();
   document.getElementById('notes-modal').classList.add('open');
+  setTimeout(()=>{const ta=document.getElementById('note-text');if(ta)ta.focus();},120);
 }
 function closeNotes(){
   document.getElementById('notes-modal').classList.remove('open');
+  hideMentionSuggestions();
   activeNoteId=null;
   renderSchedule();
 }
@@ -1622,33 +1786,59 @@ function renderNotesList(){
   const notes=learnerNotes[activeNoteId]||[];
   const list=document.getElementById('notes-list');
   if(!notes.length){list.innerHTML='<div class="empty">No notes yet. Add one below.</div>';return;}
-  list.innerHTML=notes.map((n,i)=>
-    '<div class="note-item">'+
+  // Show newest first
+  list.innerHTML=[...notes].reverse().map((n,ri)=>{
+    const realIdx=notes.length-1-ri; // original index for delete
+    // authorEmail is the new field; fall back to email, then trainer (for old notes)
+    const nameDisplay=n.authorEmail
+      ? n.authorEmail.split('@')[0]
+      : (n.email?n.email.split('@')[0]:(n.trainer||'Unknown'));
+    const domainDisplay=n.authorEmail
+      ? '@'+n.authorEmail.split('@')[1]
+      : (n.email?'@'+n.email.split('@')[1]:'');
+    return '<div class="note-item">'+
       '<div class="note-body">'+
         '<div class="note-meta">'+
-          '<span class="note-trainer">'+(n.email ? x(n.email.split('@')[0]) : x(n.trainer||''))+'</span>'+
-          (n.email ? '<span style="font-size:0.6rem;color:var(--muted)">@'+x(n.email.split('@')[1]||'')+'</span>' : '')+
-          '<span>'+n.ts+'</span>'+
+          '<span class="note-trainer">'+x(nameDisplay)+'</span>'+
+          (domainDisplay?'<span style="font-size:0.59rem;color:var(--faint)">'+x(domainDisplay)+'</span>':'')+
+          '<span>'+x(n.ts)+'</span>'+
         '</div>'+
-        '<div>'+x(n.text)+'</div>'+
+        '<div style="line-height:1.55;margin-top:0.15rem">'+renderNoteText(n.text)+'</div>'+
       '</div>'+
-      '<button class="note-x" onclick="delNote('+i+')"></button>'+
-    '</div>'
-  ).join('');
+      '<button class="note-x" onclick="delNote('+realIdx+')">×</button>'+
+    '</div>';
+  }).join('');
 }
 function addNote(){
-  const text=document.getElementById('note-text').value.trim();
+  const ta=document.getElementById('note-text');
+  const text=ta.value.trim();
   if(!text){alert('Please write a note');return;}
   if(!learnerNotes[activeNoteId])learnerNotes[activeNoteId]=[];
   const ts=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short'})+' '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
-  const email = currentUser ? currentUser.email : '';
-  const trainer = email ? email.split('@')[0] : '';
-  learnerNotes[activeNoteId].push({trainer, email, text, ts});
-  document.getElementById('note-text').value='';
+  // authorEmail is the definitive field — completely independent of slot trainer
+  const authorEmail=currentUser?currentUser.email:'';
+  learnerNotes[activeNoteId].push({
+    authorEmail,
+    trainer:authorEmail?authorEmail.split('@')[0]:'Unknown', // kept for backwards compat display only
+    text, ts
+  });
+  ta.value='';
+  hideMentionSuggestions();
+  // Fire notifications for any @tagged trainers
+  const learnerName=document.getElementById('modal-learner').textContent;
+  parseTaggedUsers(text).forEach(trainerName=>{
+    addNotification(trainerName, authorEmail, text, learnerName);
+  });
   fbSave();
   renderNotesList();
+  renderNotifBell();
 }
-function delNote(i){if(activeNoteId&&learnerNotes[activeNoteId]){learnerNotes[activeNoteId].splice(i,1);fbSave();renderNotesList();}}
+function delNote(i){
+  if(activeNoteId&&learnerNotes[activeNoteId]){
+    learnerNotes[activeNoteId].splice(i,1);
+    fbSave(); renderNotesList();
+  }
+}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeNotes();closeQA();}});
 
 // --- LECTURE TRACKER -----------------------------------------------------
@@ -2413,6 +2603,7 @@ function renderAll(){
   renderMsgStats();
   document.getElementById('task-date-lbl').textContent=fmtDate();
   renderTaskSections();
+  renderNotifBell();
 }
 
 function seedDefaultMsgSlots(){ return false; }
@@ -2438,6 +2629,7 @@ function initAuth(firebaseApp){
       document.getElementById('user-avatar').textContent = initials;
       document.getElementById('user-email-lbl').textContent = user.email;
       connectDatabase();
+      setTimeout(renderNotifBell, 2000); // show bell count after data loads
     } else {
       // Not logged in — show login screen
       currentUser = null;
