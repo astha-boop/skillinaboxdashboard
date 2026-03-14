@@ -86,9 +86,9 @@ h1{font-family:'Arial Black','Impact','Trebuchet MS',sans-serif;font-size:2.3rem
 
 /* SCHEDULE TABLE */
 .sched-wrap{background:var(--s1);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 4px 40px rgba(41,171,226,0.07);}
-.sched-head{display:grid;grid-template-columns:78px 1fr 130px 110px 112px 118px 108px;background:linear-gradient(90deg,#0D1B3E,var(--s2));border-bottom:2px solid var(--sib-blue);padding:0.55rem 0.75rem;gap:0.45rem;}
+.sched-head{display:grid;grid-template-columns:78px 1fr 130px 110px 112px 118px 120px 72px;background:linear-gradient(90deg,#0D1B3E,var(--s2));border-bottom:2px solid var(--sib-blue);padding:0.55rem 0.75rem;gap:0.45rem;}
 .sched-head div{font-size:0.58rem;text-transform:uppercase;letter-spacing:0.11em;font-weight:600;color:var(--sib-grey);}
-.slot-row{display:grid;grid-template-columns:78px 1fr 130px 110px 112px 118px 108px;padding:0.55rem 0.75rem;gap:0.45rem;border-bottom:1px solid var(--border);align-items:center;transition:background 0.15s;}
+.slot-row{display:grid;grid-template-columns:78px 1fr 130px 110px 112px 118px 120px 72px;padding:0.55rem 0.75rem;gap:0.45rem;border-bottom:1px solid var(--border);align-items:center;transition:background 0.15s;}
 .slot-row:last-child{border-bottom:none;}
 .slot-row:hover{background:rgba(41,171,226,0.04);}
 .slot-row.row-active{background:rgba(242,101,34,0.04);}
@@ -109,7 +109,7 @@ h1{font-family:'Arial Black','Impact','Trebuchet MS',sans-serif;font-size:2.3rem
 .att-blank{background:var(--s3);color:var(--muted);border-color:var(--border);}
 .slot-actions{display:flex;gap:0.28rem;align-items:center;}
 /* Inline comment panel — shown below slot row */
-.slot-comments{display:none;grid-column:1/-1;background:var(--s2);border-top:1px solid var(--border);padding:0.6rem 0.75rem;flex-direction:column;gap:0.5rem;}
+.slot-comments{display:none;grid-column:1/-1;background:rgba(19,38,74,0.7);border-top:1px solid var(--border);padding:0.65rem 0.75rem;flex-direction:column;gap:0.5rem;border-radius:0 0 8px 8px;}
 .slot-comments.open{display:flex;}
 .comment-history{display:flex;flex-direction:column;gap:0.32rem;max-height:130px;overflow-y:auto;}
 .comment-entry{background:var(--s1);border:1px solid var(--border);border-radius:6px;padding:0.38rem 0.55rem;font-size:0.75rem;line-height:1.45;}
@@ -723,7 +723,7 @@ tr:hover td{background:rgba(41,171,226,0.03);}
     </div>
     <div class="sched-wrap">
       <div class="sched-head">
-        <div>Time</div><div>Learner</div><div>Trainer</div><div>Co-Trainer</div><div>Attendance</div><div>Session Type</div><div>Notes / Del</div>
+        <div>Time</div><div>Learner</div><div>Trainer</div><div>Co-Trainer</div><div>Attendance</div><div>Session Type</div><div>💬 Comments</div><div>Del</div>
       </div>
       <div id="sched-body"></div>
       <div class="add-row-bar">
@@ -1414,7 +1414,7 @@ function renderSchedule(){
         const isRS=wd.att==='RS';
         const rowCls='slot-row'+(isRS?' row-rs':s.learner?' row-active':'');
         const attCls='att-sel att-'+(wd.att||'blank');
-        rows+='<div class="'+rowCls+'" id="r'+s.id+'" style="flex-wrap:wrap;">'+
+        rows+='<div class="'+rowCls+'" id="r'+s.id+'">'+
           '<div class="slot-time">'+
             (si===0?'<span style="font-weight:700;font-size:0.78rem">'+x(t)+'</span>':'<span style="color:var(--faint);font-size:0.68rem"></span>')+
             (isRS?'<span class="rs-tag" style="margin-top:2px">RS</span>':'')+
@@ -1442,11 +1442,11 @@ function renderSchedule(){
           '<select class="sel" onchange="upSlot('+s.id+",'type'"+ ',this.value)">'+
             STYPES.map(tr=>'<option'+(s.type===tr?' selected':'')+'>'+tr+'</option>').join('')+
           '</select>'+
-          '<div class="slot-actions">'+
-            '<button class="comment-btn'+(notes.length?' has-comments':'')+'" onclick="toggleComments('+s.id+',event)">💬'+(notes.length?' '+notes.length+' comment'+(notes.length>1?'s':''):' Comment')+'</button>'+
-            '<button class="del-btn" onclick="delSlot('+s.id+')">✕ Remove</button>'+
-          '</div>'+
-          // Inline comment panel (hidden by default)
+          // Comment button — own column
+          '<button class="comment-btn'+(notes.length?' has-comments':'')+'" onclick="toggleComments('+s.id+',event)">💬'+(notes.length?' '+notes.length:'')+'</button>'+
+          // Remove button — own column
+          '<button class="del-btn" onclick="delSlot('+s.id+')" style="justify-self:center;">✕</button>'+
+          // Comment panel spans all columns
           '<div class="slot-comments" id="sc-'+s.id+'">'+
             '<div class="comment-history" id="ch-'+s.id+'">'+renderCommentHistory(s.id)+'</div>'+
             '<div class="comment-input-row">'+
@@ -1475,17 +1475,42 @@ function upWeekNote(id,v){const wd=getSlotWeekData(id);wd.note=v;fbSave();render
 function renderCommentHistory(slotId){
   const notes=learnerNotes[slotId]||[];
   if(!notes.length) return '<div style="font-size:0.72rem;color:var(--faint);font-style:italic;">No comments yet</div>';
-  return [...notes].reverse().map(n=>{
+  return [...notes].reverse().map((n,ri)=>{
+    const realIdx=notes.length-1-ri;
     const name = n.authorEmail ? n.authorEmail.split('@')[0] : (n.email ? n.email.split('@')[0] : (n.trainer||'?'));
     const ts   = n.ts||'';
-    return '<div class="comment-entry">'+
-      '<div class="comment-entry-meta">'+
-        '<span class="comment-author">'+x(name)+'</span>'+
-        '<span class="comment-ts">'+x(ts)+'</span>'+
+    return '<div class="comment-entry" style="display:flex;align-items:flex-start;gap:0.4rem;">'+
+      '<div style="flex:1">'+
+        '<div class="comment-entry-meta">'+
+          '<span class="comment-author">'+x(name)+'</span>'+
+          '<span class="comment-ts">'+x(ts)+'</span>'+
+        '</div>'+
+        '<div style="font-size:0.75rem;line-height:1.45">'+renderNoteText(n.text)+'</div>'+
       '</div>'+
-      '<div style="font-size:0.75rem;line-height:1.45">'+renderNoteText(n.text)+'</div>'+
+      '<button onclick="delComment('+slotId+','+realIdx+')" title="Delete comment" '+
+        'style="background:none;border:none;color:var(--faint);cursor:pointer;font-size:0.8rem;padding:0.1rem 0.3rem;border-radius:4px;flex-shrink:0;transition:color 0.15s;" '+
+        'onmouseover="this.style.color=\'#ef4444\'" onmouseout="this.style.color=\'var(--faint)\'">✕</button>'+
     '</div>';
   }).join('');
+}
+
+function delComment(slotId, idx){
+  if(!learnerNotes[slotId]) return;
+  learnerNotes[slotId].splice(idx,1);
+  // Refresh history panel
+  const ch=document.getElementById('ch-'+slotId);
+  if(ch) ch.innerHTML=renderCommentHistory(slotId);
+  // Update comment button badge on the row
+  const row=document.getElementById('r'+slotId);
+  if(row){
+    const cnt=learnerNotes[slotId].length;
+    const btn=row.querySelector('.comment-btn');
+    if(btn){
+      btn.textContent='💬'+(cnt?' '+cnt:'');
+      btn.classList.toggle('has-comments',cnt>0);
+    }
+  }
+  fbSave();
 }
 
 function toggleComments(slotId, e){
@@ -1576,7 +1601,7 @@ function saveComment(slotId){
   if(row){
     const cnt=learnerNotes[slotId].length;
     const btn=row.querySelector('.comment-btn');
-    if(btn){btn.textContent='💬 '+cnt+' comment'+(cnt>1?'s':'');btn.classList.add('has-comments');}
+    if(btn){btn.textContent='💬 '+cnt;btn.classList.add('has-comments');}
   }
   // Tag notifications
   const slot=findSlot(slotId);
