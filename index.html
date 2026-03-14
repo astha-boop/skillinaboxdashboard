@@ -1760,8 +1760,6 @@ function saveComment(slotId){
   // Tag notifications
   const slot=findSlot(slotId);
   const learnerName=slot?slot.learner:'';
-  const slot=findSlot(slotId);
-  const learnerName=slot?slot.learner:'';
   logEdit('Comments','Added comment',`${learnerName||'slot '+slotId} · "${text.substring(0,60)}${text.length>60?'…':''}"`);
   parseTaggedUsers(text).forEach(name=>addNotification(name,authorEmail,text,learnerName));
   fbSave();
@@ -2179,20 +2177,6 @@ function submitQA(){
     return;
   }
   _commitSlot(slotData);
-}
-  const s=schedule[currentDay]||[];
-  const total=s.filter(x=>x.learner).length;
-  const p=s.filter(x=>getSlotWeekData(x.id).att==='P').length;
-  const a=s.filter(x=>getSlotWeekData(x.id).att==='A').length;
-  const rs=s.filter(x=>getSlotWeekData(x.id).att==='RS').length;
-  const nc=s.filter(x=>getSlotWeekData(x.id).att==='NC').length;
-  document.getElementById('day-stats').innerHTML=[
-    ['Total Sessions',total,'var(--sib-blue)','var(--sib-blue)'],
-    ['Present',p,'#22c55e','#22c55e'],
-    ['Absent',a,'#ef4444','#ef4444'],
-    ['Rescheduled',rs,'var(--purple)','var(--purple)'],
-    ['NC / No-Show',nc,'var(--amber)','var(--amber)'],
-  ].map(([l,v,sc,vc],i)=>'<div class="stat-card" style="--sc:'+sc+'"><div class="stat-lbl">'+l+'</div><div class="stat-val" style="color:'+vc+'">'+v+'</div></div>').join('');
 }
 
 // --- @MENTION AUTOCOMPLETE -----------------------------------------------
