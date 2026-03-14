@@ -598,10 +598,10 @@ tr:hover td{background:rgba(41,171,226,0.03);}
       </div>
       <div style="position:relative;">
         <button id="history-btn" onclick="toggleHistoryPanel()" title="Edit History" style="background:none;border:1px solid var(--border);border-radius:7px;padding:0.32rem 0.55rem;cursor:pointer;font-size:0.82rem;color:var(--muted);transition:all 0.15s;" onmouseover="this.style.borderColor='var(--sib-blue)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">🕐</button>
-        <div id="history-panel" style="display:none;position:absolute;top:calc(100% + 8px);right:0;width:380px;background:var(--s1);border:1px solid var(--border);border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,0.5);z-index:9000;max-height:420px;overflow-y:auto;">
-          <div style="padding:0.65rem 0.9rem;border-bottom:1px solid var(--border);font-size:0.72rem;font-weight:700;color:var(--text);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--s1);z-index:1;">
+        <div id="history-panel" style="display:none;position:absolute;top:calc(100% + 8px);right:0;width:400px;background:var(--s1);border:1px solid var(--border);border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,0.5);z-index:9000;max-height:460px;overflow-y:auto;">
+          <div style="padding:0.65rem 0.9rem;border-bottom:1px solid var(--border);font-size:0.72rem;font-weight:700;color:var(--text);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.4rem;position:sticky;top:0;background:var(--s1);z-index:2;">
             <span>🕐 Edit History</span>
-            <div style="display:flex;gap:0.5rem;align-items:center;">
+            <div style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;">
               <select id="history-filter" onchange="renderHistoryPanel()" style="background:var(--s2);border:1px solid var(--border);border-radius:5px;padding:0.18rem 0.38rem;font-size:0.65rem;color:var(--text);outline:none;">
                 <option value="">All sections</option>
                 <option>Schedule</option>
@@ -610,6 +610,9 @@ tr:hover td{background:rgba(41,171,226,0.03);}
                 <option>Tasks</option>
                 <option>Tracker</option>
                 <option>Comments</option>
+              </select>
+              <select id="history-user-filter" onchange="renderHistoryPanel()" style="background:var(--s2);border:1px solid var(--border);border-radius:5px;padding:0.18rem 0.38rem;font-size:0.65rem;color:var(--text);outline:none;">
+                <option value="">All users</option>
               </select>
             </div>
           </div>
@@ -1174,13 +1177,12 @@ function applyRemoteData(data){
   if(!data) return;
   if(data.trainers) trainers = data.trainers;
 
-  // Restore deletedSlotIds first
+  // Restore deletedSlotIds FIRST — must happen before any schedule is touched
   if(data.deletedSlotIds && Array.isArray(data.deletedSlotIds)){
     data.deletedSlotIds.forEach(id => deletedSlotIds.add(Number(id)));
   }
 
-  // REPLACE schedule weeks directly — no merging, no re-adding deleted slots
-  // Remote data IS the truth. Just filter out any known deleted IDs as a safety net.
+  // REPLACE schedule weeks directly — remote data is truth, filter deleted IDs
   if(data.userWeeks){
     Object.keys(data.userWeeks).forEach(wk=>{
       const remoteWeek = data.userWeeks[wk];
@@ -1207,7 +1209,15 @@ function applyRemoteData(data){
 
   // Notifications
   if(data.notifications) Object.assign(notifications, data.notifications);
-  if(data.editHistory && Array.isArray(data.editHistory)) editHistory = data.editHistory;
+
+  // Merge editHistory — never replace, always union by id so no entries are lost
+  if(data.editHistory && Array.isArray(data.editHistory)){
+    const existingIds = new Set(editHistory.map(e=>e.id));
+    data.editHistory.forEach(e=>{ if(!existingIds.has(e.id)) editHistory.push(e); });
+    // Re-sort newest first and cap
+    editHistory.sort((a,b)=>b.id.localeCompare(a.id));
+    if(editHistory.length>500) editHistory.length=500;
+  }
 
   if(data.slotId    && data.slotId    > slotId)    slotId    = data.slotId;
   if(data.msgId     && data.msgId     > msgId)     msgId     = data.msgId;
@@ -2330,32 +2340,83 @@ const SECTION_COLORS={
   'Schedule':'#29ABE2','Attendance':'#22c55e','Message Slots':'#F7C325',
   'Tasks':'#F26522','Tracker':'#a78bfa','Comments':'#2dd4bf','Other':'#9EA3A8'
 };
+
 function toggleHistoryPanel(){
   const panel=document.getElementById('history-panel');
   const isOpen=panel.style.display==='block';
   panel.style.display=isOpen?'none':'block';
   if(!isOpen) renderHistoryPanel();
 }
+
 function renderHistoryPanel(){
   const filter=document.getElementById('history-filter')?document.getElementById('history-filter').value:'';
+  const userFilter=document.getElementById('history-user-filter')?document.getElementById('history-user-filter').value:'';
   const list=document.getElementById('history-list');
-  let entries = filter ? editHistory.filter(e=>e.section===filter) : editHistory;
+
+  let entries = [...editHistory];
+  if(filter) entries=entries.filter(e=>e.section===filter);
+  if(userFilter) entries=entries.filter(e=>e.user===userFilter);
+
   if(!entries.length){
     list.innerHTML='<div style="padding:1.2rem;text-align:center;font-size:0.75rem;color:var(--muted);">No edits recorded'+(filter?' for '+filter:'')+'</div>';
     return;
   }
-  list.innerHTML = entries.slice(0,120).map(e=>{
-    const col = SECTION_COLORS[e.section]||'#9EA3A8';
-    return `<div style="padding:0.55rem 0.9rem;border-bottom:1px solid var(--border);display:flex;gap:0.55rem;align-items:flex-start;">
-      <div style="flex-shrink:0;width:6px;height:6px;border-radius:50%;background:${col};margin-top:5px;"></div>
-      <div style="flex:1;min-width:0;">
-        <div style="display:flex;align-items:center;gap:0.35rem;flex-wrap:wrap;margin-bottom:0.1rem;">
-          <span style="font-size:0.62rem;background:${col}22;color:${col};padding:0.05rem 0.3rem;border-radius:3px;font-weight:600;">${x(e.section)}</span>
-          <span style="font-size:0.7rem;font-weight:600;color:var(--text);">${x(e.action)}</span>
+
+  // Populate user filter dropdown
+  const usel=document.getElementById('history-user-filter');
+  if(usel){
+    const curU=usel.value;
+    const users=[...new Set(editHistory.map(e=>e.user))].sort();
+    usel.innerHTML='<option value="">All users</option>'+users.map(u=>`<option value="${u}"${u===curU?' selected':''}>${u}</option>`).join('');
+    usel.value=curU;
+  }
+
+  // Group by calendar date (extracted from ts "14 Mar 02:30 PM" → "14 Mar")
+  const getDateKey=ts=>{
+    // ts format: "14 Mar 02:30 PM" — take first two tokens
+    const parts=(ts||'').split(' ');
+    return parts.slice(0,2).join(' '); // "14 Mar"
+  };
+
+  const groups={};
+  entries.forEach(e=>{
+    const dk=getDateKey(e.ts);
+    if(!groups[dk]) groups[dk]=[];
+    groups[dk].push(e);
+  });
+
+  // Sort groups newest first (use first entry's ts for sorting)
+  const sortedDays=Object.keys(groups).sort((a,b)=>{
+    // Compare by the id (timestamp-based) of first entry
+    return groups[b][0].id.localeCompare(groups[a][0].id);
+  });
+
+  list.innerHTML=sortedDays.map(day=>{
+    const dayEntries=groups[day].slice(0,50);
+    const rows=dayEntries.map(e=>{
+      const col=SECTION_COLORS[e.section]||'#9EA3A8';
+      const timeOnly=e.ts.replace(getDateKey(e.ts),'').trim(); // just the time part
+      return `<div style="padding:0.5rem 0.9rem;border-bottom:1px solid rgba(30,58,110,0.4);display:flex;gap:0.5rem;align-items:flex-start;">
+        <div style="flex-shrink:0;width:6px;height:6px;border-radius:50%;background:${col};margin-top:5px;"></div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:0.35rem;flex-wrap:wrap;margin-bottom:0.1rem;">
+            <span style="font-size:0.62rem;background:${col}22;color:${col};padding:0.05rem 0.3rem;border-radius:3px;font-weight:600;">${x(e.section)}</span>
+            <span style="font-size:0.7rem;font-weight:600;color:var(--text);">${x(e.action)}</span>
+          </div>
+          <div style="font-size:0.73rem;color:var(--muted);line-height:1.4;">${x(e.detail)}</div>
+          <div style="display:flex;gap:0.5rem;margin-top:0.18rem;align-items:center;">
+            <span style="font-size:0.62rem;color:var(--sib-blue);font-weight:600;">👤 ${x(e.user)}</span>
+            <span style="font-size:0.6rem;color:var(--faint);">${x(timeOnly)}</span>
+          </div>
         </div>
-        <div style="font-size:0.73rem;color:var(--muted);line-height:1.4;">${x(e.detail)}</div>
-        <div style="font-size:0.6rem;color:var(--faint);margin-top:0.18rem;">${x(e.user)} · ${x(e.ts)}</div>
+      </div>`;
+    }).join('');
+
+    return `<div>
+      <div style="padding:0.45rem 0.9rem;background:var(--s2);border-bottom:1px solid var(--border);border-top:1px solid var(--border);font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);position:sticky;top:50px;z-index:1;">
+        📅 ${day} <span style="font-weight:400;text-transform:none;letter-spacing:0;">(${groups[day].length} edit${groups[day].length!==1?'s':''})</span>
       </div>
+      ${rows}
     </div>`;
   }).join('');
 }
