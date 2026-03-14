@@ -538,7 +538,7 @@ tr:hover td{background:rgba(41,171,226,0.03);}
   <button class="nav-btn active" onclick="switchTab('schedule',this)"><span>📅</span> Schedule</button>
   <button class="nav-btn" onclick="switchTab('tracker',this)"><span>📊</span> Lecture Tracker</button>
   <button class="nav-btn" onclick="switchTab('trainers',this)"><span>👩‍🏫</span> Trainer Report</button>
-  <button class="nav-btn" onclick="switchTab('messages',this)"><span>💬</span> Message Slots</button>
+  <button class="nav-btn" onclick="switchTab('email',this)"><span>✉️</span> Email</button>
   <div class="t-section">
     <div class="nav-lbl">Trainers <span style="color:#3a5888" id="t-count">(12)</span></div>
     <div id="trainer-list"></div>
@@ -610,6 +610,7 @@ tr:hover td{background:rgba(41,171,226,0.03);}
                 <option>Tasks</option>
                 <option>Tracker</option>
                 <option>Comments</option>
+                <option>Extension</option>
               </select>
               <select id="history-user-filter" onchange="renderHistoryPanel()" style="background:var(--s2);border:1px solid var(--border);border-radius:5px;padding:0.18rem 0.38rem;font-size:0.65rem;color:var(--text);outline:none;">
                 <option value="">All users</option>
@@ -725,6 +726,7 @@ tr:hover td{background:rgba(41,171,226,0.03);}
       <button class="tab-btn" id="tb-trainers" onclick="switchTab('trainers',this)">👩‍🏫 Trainer Report</button>
       <button class="tab-btn" id="tb-messages" onclick="switchTab('messages',this)">💬 Message Slots</button>
       <button class="tab-btn" id="tb-tasks" onclick="switchTab('tasks',this)">✅ Task Manager</button>
+      <button class="tab-btn" id="tb-ext" onclick="switchTab('ext',this)">📋 Extension Tracker</button>
     </div>
   </div>
 
@@ -951,7 +953,107 @@ tr:hover td{background:rgba(41,171,226,0.03);}
 </main>
 </div>
 
-<!-- ADD TASK MODAL -->
+<!-- ══ EXTENSION TRACKER TAB ══ -->
+<template id="ext-tab-html">
+  <div class="tab-panel" id="tab-ext">
+
+    <!-- Stats bar -->
+    <div id="ext-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.75rem;margin-bottom:1.4rem;"></div>
+
+    <!-- Toolbar -->
+    <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:1rem;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="openExtModal()" style="padding:0.38rem 1rem;font-size:0.8rem;">+ Add Extension</button>
+      <input type="text" id="ext-search" placeholder="🔍 Search student…" oninput="renderExtTable()"
+        style="background:var(--s1);border:1px solid var(--border);border-radius:7px;padding:0.35rem 0.7rem;font-size:0.75rem;color:var(--text);outline:none;width:200px;">
+      <select id="ext-type-filter" onchange="renderExtTable()"
+        style="background:var(--s1);border:1px solid var(--border);border-radius:7px;padding:0.35rem 0.6rem;font-size:0.75rem;color:var(--text);outline:none;">
+        <option value="">All Types</option>
+        <option>Exam</option>
+        <option>Portfolio</option>
+        <option>Both</option>
+        <option>Course Extension</option>
+      </select>
+      <select id="ext-status-filter" onchange="renderExtTable()"
+        style="background:var(--s1);border:1px solid var(--border);border-radius:7px;padding:0.35rem 0.6rem;font-size:0.75rem;color:var(--text);outline:none;">
+        <option value="">All Statuses</option>
+        <option>Pending</option>
+        <option>Approved</option>
+        <option>Rejected</option>
+        <option>Mail Sent</option>
+      </select>
+      <span id="ext-count" style="font-size:0.72rem;color:var(--muted);margin-left:auto;"></span>
+    </div>
+
+    <!-- Table -->
+    <div class="log-wrap" style="overflow-x:auto;">
+      <table id="ext-table" style="width:100%;border-collapse:collapse;min-width:1000px;">
+        <thead>
+          <tr style="background:var(--s2);border-bottom:2px solid var(--sib-blue);">
+            <th style="padding:0.55rem 0.75rem;text-align:left;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--sib-grey);font-weight:600;white-space:nowrap;">Student Name</th>
+            <th style="padding:0.55rem 0.75rem;text-align:left;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--sib-grey);font-weight:600;">Number</th>
+            <th style="padding:0.55rem 0.75rem;text-align:left;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--sib-grey);font-weight:600;">Mail ID</th>
+            <th style="padding:0.55rem 0.75rem;text-align:left;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--sib-grey);font-weight:600;white-space:nowrap;">Extension Type</th>
+            <th style="padding:0.55rem 0.75rem;text-align:left;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--sib-grey);font-weight:600;">Charges</th>
+            <th style="padding:0.55rem 0.75rem;text-align:left;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--sib-grey);font-weight:600;">Duration</th>
+            <th style="padding:0.55rem 0.75rem;text-align:left;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--sib-grey);font-weight:600;white-space:nowrap;">Approved By</th>
+            <th style="padding:0.55rem 0.75rem;text-align:left;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--sib-grey);font-weight:600;">Reason</th>
+            <th style="padding:0.55rem 0.75rem;text-align:left;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--sib-grey);font-weight:600;">Status</th>
+            <th style="padding:0.55rem 0.75rem;text-align:left;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--sib-grey);font-weight:600;white-space:nowrap;">Mail Sent</th>
+            <th style="padding:0.55rem 0.75rem;text-align:center;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--sib-grey);font-weight:600;"></th>
+          </tr>
+        </thead>
+        <tbody id="ext-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</template>
+<!-- EXTENSION TRACKER MODAL -->
+<div class="modal-bg" id="ext-modal" onclick="if(event.target===this)closeExtModal()">
+  <div class="modal" style="width:560px;">
+    <div class="modal-hd">
+      <div>
+        <div class="modal-ttl" id="ext-modal-title">📋 Add Extension</div>
+        <div class="modal-sub">Fill in the extension request details</div>
+      </div>
+      <button class="modal-x" onclick="closeExtModal()">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;">
+      <div class="field" style="grid-column:1/-1"><label>Student Name *</label><input id="ext-f-name" placeholder="Full name" style="width:100%"></div>
+      <div class="field"><label>Phone Number</label><input id="ext-f-number" placeholder="e.g. 9876543210" style="width:100%"></div>
+      <div class="field"><label>Email ID</label><input id="ext-f-email" placeholder="student@email.com" type="email" style="width:100%"></div>
+      <div class="field"><label>Extension Type *</label>
+        <select id="ext-f-type" style="width:100%">
+          <option value="">— Select —</option>
+          <option>Exam</option>
+          <option>Portfolio</option>
+          <option>Both</option>
+          <option>Course Extension</option>
+        </select>
+      </div>
+      <div class="field"><label>Charges (₹)</label><input id="ext-f-charges" placeholder="e.g. 2000" style="width:100%"></div>
+      <div class="field"><label>Duration</label><input id="ext-f-duration" placeholder="e.g. 1 month, 15 days" style="width:100%"></div>
+      <div class="field"><label>Approved By</label>
+        <select id="ext-f-approvedby" style="width:100%">
+          <option value="">— Select trainer —</option>
+        </select>
+      </div>
+      <div class="field"><label>Status</label>
+        <select id="ext-f-status" style="width:100%">
+          <option>Pending</option>
+          <option>Approved</option>
+          <option>Rejected</option>
+          <option>Mail Sent</option>
+        </select>
+      </div>
+      <div class="field" style="grid-column:1/-1"><label>Reason for Extension</label><textarea id="ext-f-reason" placeholder="Why is this extension needed?" style="width:100%;background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:0.38rem 0.55rem;color:var(--text);font-family:inherit;font-size:0.8rem;resize:none;height:64px;outline:none;"></textarea></div>
+    </div>
+    <div style="display:flex;gap:0.5rem;margin-top:0.85rem;">
+      <button class="btn btn-primary" onclick="submitExt()" style="flex:1;">Save</button>
+      <button class="btn" onclick="closeExtModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="add-task-modal" onclick="if(event.target===this)closeAddTaskModal()">
   <div class="modal" style="width:520px;">
     <div class="modal-hd">
@@ -1143,7 +1245,7 @@ function fbSave(){
     });
     const payload = {
       trainers, userWeeks, allWeekData, learnerNotes, notifications,
-      editHistory,
+      editHistory, extRecords, extId,
       slotId, msgId, trackerId, taskId,
       deletedSlotIds: [...deletedSlotIds],
     };
@@ -1223,6 +1325,8 @@ function applyRemoteData(data){
   if(data.msgId     && data.msgId     > msgId)     msgId     = data.msgId;
   if(data.trackerId && data.trackerId > trackerId) trackerId = data.trackerId;
   if(data.taskId    && data.taskId    > taskId)    taskId    = data.taskId;
+  if(data.extRecords && Array.isArray(data.extRecords)) extRecords = data.extRecords;
+  if(data.extId     && data.extId     > extId)     extId     = data.extId;
 
   // Re-point schedule to current week
   if(!scheduleByWeek[currentWeekKey])
@@ -1472,18 +1576,6 @@ function syncAllDropdowns(){
 }
 
 // --- TAB SWITCHING --------------------------------------------------------
-function switchTab(name,btn){
-  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn,.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('tab-'+name).classList.add('active');
-  const tb=document.getElementById('tb-'+name); if(tb)tb.classList.add('active');
-  btn.classList.add('active');
-  if(name==='trainers'){ if(trainerView==='month') renderMonthlyReport(); else renderTrainerCards(); }
-  if(name==='tracker'){renderTracker();}
-  if(name==='messages'){renderMsgBody();renderMsgStats();}
-  if(name==='tasks'){renderTaskSections();}
-}
-
 // --- SCHEDULE ------------------------------------------------------------
 function pickDay(day,btn){
   currentDay=day;
@@ -2338,7 +2430,7 @@ document.addEventListener('click',e=>{
 // ── EDIT HISTORY PANEL ────────────────────────────────────────────────────
 const SECTION_COLORS={
   'Schedule':'#29ABE2','Attendance':'#22c55e','Message Slots':'#F7C325',
-  'Tasks':'#F26522','Tracker':'#a78bfa','Comments':'#2dd4bf','Other':'#9EA3A8'
+  'Tasks':'#F26522','Tracker':'#a78bfa','Comments':'#2dd4bf','Extension':'#F7C325','Other':'#9EA3A8'
 };
 
 function toggleHistoryPanel(){
@@ -2500,7 +2592,7 @@ function delNote(i){
   learnerNotes[activeNoteId].splice(i,1);
   fbSave(); renderNotesList();
 }
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeNotes();closeQA();closeRSModal();if(_pendingSlot){dupCancel();}}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeNotes();closeQA();closeRSModal();closeExtModal();if(_pendingSlot){dupCancel();}}});
 
 // --- LECTURE TRACKER -----------------------------------------------------
 let currentTrackerDay = ''; // '' = All Days
@@ -3540,6 +3632,238 @@ function renderAll(){
   document.getElementById('task-date-lbl').textContent=fmtDate();
   renderTaskSections();
   renderNotifBell();
+}
+
+// ── EXTENSION TRACKER ────────────────────────────────────────────────────
+// Stored in allWeekData under a special key so it persists with Firebase
+let extRecords = []; // [{id, name, number, email, type, charges, duration, approvedBy, reason, status, mailSent, createdBy, createdAt}]
+let _extEditId = null;
+let extId = 0;
+
+function wExt(){ return extRecords; }
+
+// Mount the tab panel from template (once)
+(function mountExtTab(){
+  const tmpl = document.getElementById('ext-tab-html');
+  if(!tmpl) return;
+  const panel = tmpl.content.querySelector('#tab-ext').cloneNode(true);
+  document.querySelector('main').appendChild(panel);
+})();
+
+function switchTab(name,btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn,.nav-btn').forEach(b=>b.classList.remove('active'));
+  const panel = document.getElementById('tab-'+name);
+  if(panel) panel.classList.add('active');
+  const tb=document.getElementById('tb-'+name); if(tb)tb.classList.add('active');
+  btn.classList.add('active');
+  if(name==='trainers'){ if(typeof trainerView!=='undefined'&&trainerView==='month') renderMonthlyReport(); else renderTrainerCards(); }
+  if(name==='tracker'){renderTracker();}
+  if(name==='messages'){renderMsgBody();renderMsgStats();}
+  if(name==='tasks'){renderTaskSections();}
+  if(name==='ext'){renderExtTab();}
+}
+
+const EXT_TYPE_COLORS={
+  'Exam':'#29ABE2','Portfolio':'#a78bfa','Both':'#F26522',
+  'Course Extension':'#22c55e','':`#9EA3A8`
+};
+const EXT_STATUS_COLORS={
+  'Pending':'#F7C325','Approved':'#22c55e','Rejected':'#ef4444','Mail Sent':'#29ABE2','':`#9EA3A8`
+};
+
+function renderExtTab(){
+  syncExtDropdowns();
+  renderExtStats();
+  renderExtTable();
+}
+
+function syncExtDropdowns(){
+  const ab = document.getElementById('ext-f-approvedby');
+  if(ab){
+    const v=ab.value;
+    ab.innerHTML='<option value="">— Select trainer —</option>'+trainers.map(t=>`<option${v===t?' selected':''}>${x(t)}</option>`).join('');
+    ab.value=v;
+  }
+}
+
+function renderExtStats(){
+  const el = document.getElementById('ext-stats');
+  if(!el) return;
+  const all = extRecords;
+  const total = all.length;
+  const pending = all.filter(r=>r.status==='Pending').length;
+  const approved = all.filter(r=>r.status==='Approved').length;
+  const mailSent = all.filter(r=>r.mailSent).length;
+  const types = {};
+  all.forEach(r=>{ types[r.type]=(types[r.type]||0)+1; });
+  el.innerHTML = [
+    ['Total Extensions', total, '#29ABE2'],
+    ['Pending', pending, '#F7C325'],
+    ['Approved', approved, '#22c55e'],
+    ['Mail Sent', mailSent, '#a78bfa'],
+  ].map(([l,v,c])=>`
+    <div style="background:var(--s1);border:1px solid var(--border);border-top:2px solid ${c};border-radius:10px;padding:0.85rem 1rem;">
+      <div style="font-size:0.58rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);font-weight:600;margin-bottom:0.3rem;">${l}</div>
+      <div style="font-size:1.7rem;font-weight:700;color:${c};line-height:1;">${v}</div>
+    </div>`).join('');
+}
+
+function renderExtTable(){
+  const tbody = document.getElementById('ext-tbody');
+  const countEl = document.getElementById('ext-count');
+  if(!tbody) return;
+
+  const srch = (document.getElementById('ext-search')||{}).value?.toLowerCase()||'';
+  const typeF = (document.getElementById('ext-type-filter')||{}).value||'';
+  const statusF = (document.getElementById('ext-status-filter')||{}).value||'';
+
+  let rows = extRecords.filter(r=>{
+    if(srch && !(r.name||'').toLowerCase().includes(srch) && !(r.email||'').toLowerCase().includes(srch)) return false;
+    if(typeF && r.type!==typeF) return false;
+    if(statusF && r.status!==statusF) return false;
+    return true;
+  });
+
+  if(countEl) countEl.textContent = rows.length+' record'+(rows.length!==1?'s':'');
+
+  if(!rows.length){
+    tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;padding:2rem;color:var(--muted);font-style:italic;">No extension records found. Click "+ Add Extension" to add one.</td></tr>`;
+    return;
+  }
+
+  const myEmail = currentUser ? currentUser.email : '';
+  tbody.innerHTML = rows.map(r=>{
+    const tc = EXT_TYPE_COLORS[r.type]||'#9EA3A8';
+    const sc = EXT_STATUS_COLORS[r.status]||'#9EA3A8';
+    const canDel = !r.createdBy || !myEmail || r.createdBy===myEmail;
+    return `<tr style="border-bottom:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background='rgba(41,171,226,0.04)'" onmouseout="this.style.background=''">
+      <td style="padding:0.55rem 0.75rem;font-weight:600;font-size:0.78rem;white-space:nowrap;">${x(r.name)}<br><span style="font-size:0.6rem;color:var(--faint);font-weight:400;">${r.createdBy?'by '+r.createdBy.split('@')[0]:''}</span></td>
+      <td style="padding:0.55rem 0.75rem;font-size:0.76rem;color:var(--muted);">${x(r.number||'—')}</td>
+      <td style="padding:0.55rem 0.75rem;font-size:0.73rem;color:var(--sib-blue);">${r.email?`<a href="mailto:${x(r.email)}" style="color:var(--sib-blue);text-decoration:none;">${x(r.email)}</a>`:'—'}</td>
+      <td style="padding:0.55rem 0.75rem;">
+        <span style="background:${tc}20;color:${tc};border:1px solid ${tc}44;border-radius:5px;padding:0.12rem 0.45rem;font-size:0.68rem;font-weight:600;white-space:nowrap;">${x(r.type||'—')}</span>
+      </td>
+      <td style="padding:0.55rem 0.75rem;font-size:0.76rem;">${r.charges?'₹'+x(r.charges):'—'}</td>
+      <td style="padding:0.55rem 0.75rem;font-size:0.76rem;color:var(--muted);">${x(r.duration||'—')}</td>
+      <td style="padding:0.55rem 0.75rem;font-size:0.76rem;">${x(r.approvedBy||'—')}</td>
+      <td style="padding:0.55rem 0.75rem;font-size:0.72rem;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${x(r.reason||'')}">${x(r.reason||'—')}</td>
+      <td style="padding:0.55rem 0.75rem;">
+        <select onchange="updateExtField('${r.id}','status',this.value)" style="background:${sc}18;color:${sc};border:1px solid ${sc}44;border-radius:5px;padding:0.15rem 0.35rem;font-size:0.7rem;font-weight:600;outline:none;cursor:pointer;">
+          ${['Pending','Approved','Rejected','Mail Sent'].map(s=>`<option value="${s}"${r.status===s?' selected':''}>${s}</option>`).join('')}
+        </select>
+      </td>
+      <td style="padding:0.55rem 0.75rem;text-align:center;">
+        <button onclick="toggleExtMail('${r.id}')" style="background:${r.mailSent?'rgba(41,171,226,0.15)':'var(--s2)'};border:1px solid ${r.mailSent?'rgba(41,171,226,0.4)':'var(--border)'};color:${r.mailSent?'var(--sib-blue)':'var(--muted)'};border-radius:6px;padding:0.2rem 0.55rem;font-size:0.68rem;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all 0.15s;">
+          ${r.mailSent?'✅ Sent':'📧 Send'}
+        </button>
+      </td>
+      <td style="padding:0.55rem 0.75rem;text-align:center;white-space:nowrap;">
+        <button onclick="openExtModal('${r.id}')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:0.18rem 0.45rem;font-size:0.7rem;color:var(--muted);cursor:pointer;font-family:inherit;margin-right:4px;" title="Edit">✏️</button>
+        ${canDel?`<button onclick="deleteExt('${r.id}')" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:5px;padding:0.18rem 0.45rem;font-size:0.7rem;color:var(--red);cursor:pointer;font-family:inherit;" title="Delete">✕</button>`:''}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openExtModal(editId){
+  _extEditId = editId||null;
+  const title = document.getElementById('ext-modal-title');
+  syncExtDropdowns();
+
+  if(editId){
+    const r = extRecords.find(r=>r.id===editId);
+    if(!r) return;
+    if(title) title.textContent='✏️ Edit Extension';
+    document.getElementById('ext-f-name').value=r.name||'';
+    document.getElementById('ext-f-number').value=r.number||'';
+    document.getElementById('ext-f-email').value=r.email||'';
+    document.getElementById('ext-f-type').value=r.type||'';
+    document.getElementById('ext-f-charges').value=r.charges||'';
+    document.getElementById('ext-f-duration').value=r.duration||'';
+    document.getElementById('ext-f-approvedby').value=r.approvedBy||'';
+    document.getElementById('ext-f-reason').value=r.reason||'';
+    document.getElementById('ext-f-status').value=r.status||'Pending';
+  } else {
+    if(title) title.textContent='📋 Add Extension';
+    ['ext-f-name','ext-f-number','ext-f-email','ext-f-charges','ext-f-duration','ext-f-reason'].forEach(id=>{document.getElementById(id).value='';});
+    document.getElementById('ext-f-type').value='';
+    document.getElementById('ext-f-approvedby').value='';
+    document.getElementById('ext-f-status').value='Pending';
+  }
+  document.getElementById('ext-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('ext-f-name').focus(),100);
+}
+
+function closeExtModal(){
+  document.getElementById('ext-modal').classList.remove('open');
+  _extEditId=null;
+}
+
+function submitExt(){
+  const name = document.getElementById('ext-f-name').value.trim();
+  if(!name){alert('Student name is required.');return;}
+  const rec = {
+    id: _extEditId || ('ext'+(++extId)+'_'+Date.now()),
+    name,
+    number:   document.getElementById('ext-f-number').value.trim(),
+    email:    document.getElementById('ext-f-email').value.trim(),
+    type:     document.getElementById('ext-f-type').value,
+    charges:  document.getElementById('ext-f-charges').value.trim(),
+    duration: document.getElementById('ext-f-duration').value.trim(),
+    approvedBy: document.getElementById('ext-f-approvedby').value,
+    reason:   document.getElementById('ext-f-reason').value.trim(),
+    status:   document.getElementById('ext-f-status').value||'Pending',
+    mailSent: _extEditId ? (extRecords.find(r=>r.id===_extEditId)||{}).mailSent||false : false,
+    createdBy: _extEditId ? (extRecords.find(r=>r.id===_extEditId)||{}).createdBy||(currentUser?currentUser.email:'') : (currentUser?currentUser.email:''),
+    createdAt: _extEditId ? (extRecords.find(r=>r.id===_extEditId)||{}).createdAt||new Date().toISOString() : new Date().toISOString(),
+  };
+
+  if(_extEditId){
+    const idx = extRecords.findIndex(r=>r.id===_extEditId);
+    if(idx>=0) extRecords[idx]=rec;
+    logEdit('Extension',`Edited record`,`${name} · ${rec.type} · ${rec.status}`);
+  } else {
+    extRecords.push(rec);
+    logEdit('Extension',`Added record`,`${name} · ${rec.type||'—'} · ${rec.duration||'—'}`);
+  }
+
+  closeExtModal();
+  fbSave();
+  renderExtTab();
+}
+
+function updateExtField(id,field,val){
+  const r = extRecords.find(r=>r.id===id);
+  if(!r) return;
+  logEdit('Extension',`Changed ${field}`,`${r.name} · "${r[field]||'—'}" → "${val}"`);
+  r[field]=val;
+  fbSave();
+  renderExtStats();
+  renderExtTable();
+}
+
+function toggleExtMail(id){
+  const r = extRecords.find(r=>r.id===id);
+  if(!r) return;
+  r.mailSent = !r.mailSent;
+  if(r.mailSent && r.status!=='Mail Sent') r.status='Mail Sent';
+  logEdit('Extension', r.mailSent?'Marked mail sent':'Unmarked mail sent', `${r.name}`);
+  fbSave();
+  renderExtTable();
+  renderExtStats();
+}
+
+function deleteExt(id){
+  const r = extRecords.find(r=>r.id===id);
+  if(!r) return;
+  const myEmail = currentUser?currentUser.email:'';
+  if(r.createdBy && myEmail && r.createdBy!==myEmail){alert('You can only delete records you created.');return;}
+  if(!confirm(`Delete extension record for "${r.name}"?`)) return;
+  logEdit('Extension','Deleted record',`${r.name} · ${r.type}`);
+  extRecords = extRecords.filter(r=>r.id!==id);
+  fbSave();
+  renderExtTab();
 }
 
 function seedDefaultMsgSlots(){ return false; }
