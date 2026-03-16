@@ -622,6 +622,7 @@ tr:hover td{background:rgba(41,171,226,0.03);}
         </div>
       </div>
       <button class="btn" onclick="exportCSV()">⬇ Export</button>
+      <button class="btn" onclick="showDiagnostic()" title="Show what data is loaded from Firebase">🔍 Debug</button>
       <button class="btn btn-primary" onclick="flashSave()">✓ Save All</button>
     </div>
   </div>
@@ -1280,10 +1281,9 @@ function fbSave(){
 function _buildPayload(){
   const userWeeks = {};
   Object.keys(scheduleByWeek).forEach(wk=>{
-    if(wk === '2026-03-02') return;
     userWeeks[wk] = {};
     DAYS.forEach(d=>{
-      userWeeks[wk][d] = (scheduleByWeek[wk][d]||[]).filter(s=>!deletedSlotIds.has(Number(s.id)));
+      userWeeks[wk][d] = (scheduleByWeek[wk][d]||[]).filter(s=>s && !deletedSlotIds.has(Number(s.id)));
     });
   });
   return {
@@ -1291,6 +1291,7 @@ function _buildPayload(){
     editHistory, extRecords, extId, trashBin,
     slotId, msgId, trackerId, taskId,
     deletedSlotIds: [...deletedSlotIds],
+    _savedAt: Date.now(),
   };
 }
 
@@ -1355,16 +1356,14 @@ function fbSaveNow(){
   _doWrite();
 }
 
-let _fbListenIgnoreUntil = 0; // timestamp: ignore remote updates until after this time
+let _initialLoadDone = false;
 
 function fbListen(){
-  // Ignore the immediate echo of our own just-loaded snapshot for 3 seconds
-  _fbListenIgnoreUntil = Date.now() + 3000;
   db.ref('skillinabox/data').on('value', snap=>{
-    // If WE have a write in flight, this event is our own echo — skip it
+    // Skip our own in-flight writes
     if(_pendingWriteCount > 0) return;
-    // Also ignore the immediate echo right after initial load
-    if(Date.now() < _fbListenIgnoreUntil) return;
+    // Skip the very first event — that is the same snapshot we just loaded with once()
+    if(!_initialLoadDone){ _initialLoadDone = true; return; }
     const data = snap.val();
     if(!data) return;
     applyRemoteData(data);
@@ -1415,144 +1414,61 @@ function deepMerge(target, source){
 
 function applyRemoteData(data){
   if(!data) return;
-  if(data.trainers) trainers = data.trainers;
 
-  // Restore deletedSlotIds FIRST — must happen before any schedule is touched
-  if(data.deletedSlotIds && Array.isArray(data.deletedSlotIds)){
+  // ── FIREBASE WINS ──────────────────────────────────────────────────────
+  // When Firebase has data, it is the single source of truth.
+  // We do NOT merge with hardcoded seed data — we replace it.
+  // The hardcoded scheduleByWeek seed is only used on very first load
+  // when Firebase returns nothing.
+
+  if(data.trainers && Array.isArray(data.trainers) && data.trainers.length)
+    trainers = data.trainers;
+
+  if(data.deletedSlotIds && Array.isArray(data.deletedSlotIds))
     data.deletedSlotIds.forEach(id => deletedSlotIds.add(Number(id)));
-  }
 
-  // MERGE schedule weeks — keep hardcoded seed data, overlay Firebase changes on top
-  // This ensures the Mar 9 seed is never wiped even if Firebase has empty data
-  if(data.userWeeks){
+  // Replace schedule weeks from Firebase completely
+  if(data.userWeeks && Object.keys(data.userWeeks).length){
     Object.keys(data.userWeeks).forEach(wk=>{
       const remoteWeek = data.userWeeks[wk];
-      if(!scheduleByWeek[wk]){
-        // Week not in hardcoded data — create it fresh from Firebase
-        scheduleByWeek[wk] = {};
-        DAYS.forEach(day=>{
-          scheduleByWeek[wk][day] = (remoteWeek[day]||[]).filter(s=>!deletedSlotIds.has(Number(s.id)));
-        });
-      } else {
-        // Week exists in hardcoded data — merge by ID
-        DAYS.forEach(day=>{
-          const local = scheduleByWeek[wk][day] || [];
-          const remote = remoteWeek[day] || [];
-          const localIds = new Set(local.map(s=>s.id));
-          // Add remote slots not in local (user-added), skip deleted
-          remote.forEach(rs=>{
-            if(deletedSlotIds.has(Number(rs.id))) return;
-            if(!localIds.has(rs.id)){
-              local.push(rs);
-            } else {
-              // Update editable fields from remote (trainer changes, notes etc.)
-              const ls = local.find(s=>s.id===rs.id);
-              if(ls){
-                ['trainer','coTrainer','type','learner','note','addedBy','addedAt'].forEach(f=>{
-                  if(rs[f]!==undefined) ls[f]=rs[f];
-                });
-              }
-            }
-            // Migrate legacy att stored directly on slot object → into allWeekData attData
-            if(rs.att && rs.att !== ''){
-              if(!allWeekData[wk]) allWeekData[wk] = {};
-              if(!allWeekData[wk].attData) allWeekData[wk].attData = {};
-              if(!allWeekData[wk].attData[rs.id] || !allWeekData[wk].attData[rs.id].att){
-                if(!allWeekData[wk].attData[rs.id]) allWeekData[wk].attData[rs.id] = {att:'',note:''};
-                allWeekData[wk].attData[rs.id].att = rs.att;
-              }
-            }
-          });
-          // Remove any hardcoded slots that have since been deleted
-          scheduleByWeek[wk][day] = local.filter(s=>!deletedSlotIds.has(Number(s.id)));
-        });
-      }
+      if(!remoteWeek) return;
+      // Always overwrite with Firebase data — Firebase is source of truth
+      scheduleByWeek[wk] = {};
+      DAYS.forEach(day=>{
+        scheduleByWeek[wk][day] = (remoteWeek[day]||[]).filter(
+          s => s && !deletedSlotIds.has(Number(s.id))
+        );
+      });
     });
   }
 
-  // Deep-merge allWeekData — never overwrite existing local entries with empty remote ones
-  // This prevents attendance marks, tasks, and notes from being wiped on reload
+  // Replace allWeekData completely from Firebase
   if(data.allWeekData){
     Object.keys(data.allWeekData).forEach(wk=>{
-      const remote = data.allWeekData[wk];
-      if(!remote) return;
-      if(!allWeekData[wk]){
-        // Week doesn't exist locally — take it from remote directly
-        allWeekData[wk] = remote;
-      } else {
-        const local = allWeekData[wk];
-        // Deep-merge attData: remote wins for any slot that has real data
-        if(remote.attData){
-          if(!local.attData) local.attData = {};
-          Object.keys(remote.attData).forEach(slotId=>{
-            const rd = remote.attData[slotId];
-            const ld = local.attData[slotId];
-            if(!ld){
-              local.attData[slotId] = rd;
-            } else {
-              if(rd.att && rd.att !== '') ld.att = rd.att;
-              if(rd.note && rd.note !== '') ld.note = rd.note;
-            }
-          });
-        }
-        // Deep-merge msgDoneData
-        if(remote.msgDoneData){
-          if(!local.msgDoneData) local.msgDoneData = {};
-          Object.assign(local.msgDoneData, remote.msgDoneData);
-        }
-        // Deep-merge msgSlots per day — remote wins when it has data
-        if(remote.msgSlots){
-          if(!local.msgSlots) local.msgSlots = {};
-          DAYS.forEach(day=>{
-            if(remote.msgSlots[day] && remote.msgSlots[day].length > 0){
-              local.msgSlots[day] = remote.msgSlots[day];
-            }
-          });
-        }
-        // Deep-merge tasks per category — union by id, remote wins for updates
-        if(remote.tasks){
-          if(!local.tasks) local.tasks = {};
-          ['training','operations','marketing','admin','other'].forEach(cat=>{
-            const rt = remote.tasks[cat] || [];
-            const lt = local.tasks[cat] || [];
-            if(!rt.length){ local.tasks[cat] = lt; return; }
-            if(!lt.length){ local.tasks[cat] = rt; return; }
-            const byId = {};
-            lt.forEach(t=>{ byId[t.id] = {...t}; });
-            rt.forEach(t=>{ byId[t.id] = t; }); // remote wins for updates
-            local.tasks[cat] = Object.values(byId);
-          });
-        }
-        // Deep-merge tracker — union by id, remote wins
-        if(Array.isArray(remote.tracker)){
-          if(!Array.isArray(local.tracker) || !local.tracker.length){
-            local.tracker = remote.tracker;
-          } else {
-            const byId = {};
-            local.tracker.forEach(t=>{ byId[t.id] = {...t}; });
-            remote.tracker.forEach(t=>{ byId[t.id] = t; });
-            local.tracker = Object.values(byId);
-          }
-        }
-      }
+      if(data.allWeekData[wk]) allWeekData[wk] = data.allWeekData[wk];
+    });
+    // Ensure every week store has required sub-keys
+    Object.keys(allWeekData).forEach(wk=>{
+      const s = allWeekData[wk];
+      if(!s.attData) s.attData = {};
+      if(!s.msgDoneData) s.msgDoneData = {};
+      if(!s.msgSlots) s.msgSlots = {Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
+      if(!s.tasks) s.tasks = {};
+      if(!Array.isArray(s.tracker)) s.tracker = [];
+      ['training','operations','marketing','admin','other'].forEach(k=>{ if(!Array.isArray(s.tasks[k])) s.tasks[k]=[]; });
     });
   }
 
-  // Replace learnerNotes arrays directly
-  if(data.learnerNotes){
-    Object.keys(data.learnerNotes).forEach(k=>{
-      learnerNotes[k] = data.learnerNotes[k];
-    });
-  }
+  // Replace learnerNotes
+  if(data.learnerNotes) learnerNotes = data.learnerNotes;
 
-  // Notifications
-  if(data.notifications) Object.assign(notifications, data.notifications);
+  // Replace notifications
+  if(data.notifications) notifications = data.notifications;
 
-  // Merge editHistory — never replace, always union by id so no entries are lost
+  // Merge editHistory (union — never lose entries)
   if(data.editHistory && Array.isArray(data.editHistory)){
     const existingIds = new Set(editHistory.map(e=>e.id));
     data.editHistory.forEach(e=>{ if(!existingIds.has(e.id)) editHistory.push(e); });
-    // Re-sort newest first and cap
     editHistory.sort((a,b)=>b.id.localeCompare(a.id));
     if(editHistory.length>500) editHistory.length=500;
   }
@@ -1565,7 +1481,7 @@ function applyRemoteData(data){
   if(data.extId     && data.extId     > extId)     extId     = data.extId;
   if(data.trashBin  && Array.isArray(data.trashBin)) trashBin = data.trashBin;
 
-  // Re-point schedule to current week
+  // Ensure current week exists
   if(!scheduleByWeek[currentWeekKey])
     scheduleByWeek[currentWeekKey]={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
   schedule = scheduleByWeek[currentWeekKey];
@@ -4207,6 +4123,68 @@ function deleteExt(id){
 
 function seedDefaultMsgSlots(){ return false; }
 
+// ── DIAGNOSTIC: shows what data is actually loaded ────────────────────────
+function showDiagnostic(){
+  const weeks = Object.keys(scheduleByWeek).sort();
+  const weekInfo = weeks.map(wk=>{
+    const total = DAYS.reduce((n,d)=>n+(scheduleByWeek[wk][d]||[]).length,0);
+    const hasAtt = allWeekData[wk] && Object.keys(allWeekData[wk].attData||{}).length;
+    return `<tr>
+      <td style="padding:0.3rem 0.6rem;font-size:0.75rem;font-weight:600;color:${wk===currentWeekKey?'#F26522':'#EEF2FF'}">${wk}${wk===currentWeekKey?' ← current':''}</td>
+      <td style="padding:0.3rem 0.6rem;font-size:0.75rem;color:#22c55e;text-align:center">${total} slots</td>
+      <td style="padding:0.3rem 0.6rem;font-size:0.75rem;color:#29ABE2;text-align:center">${hasAtt||0} att records</td>
+      <td style="padding:0.3rem 0.6rem;font-size:0.75rem;color:#a78bfa;text-align:center">${(allWeekData[wk]&&(allWeekData[wk].tracker||[]).length)||0} tracker</td>
+    </tr>`;
+  }).join('');
+
+  // Sample Monday slots for current week
+  const sampleSlots = (scheduleByWeek[currentWeekKey]&&scheduleByWeek[currentWeekKey]['Monday']||[]).slice(0,5);
+  const sampleHtml = sampleSlots.length
+    ? sampleSlots.map(s=>`<div style="font-size:0.72rem;padding:0.18rem 0;border-bottom:1px solid #1e3a6e;color:#EEF2FF">${s.time} — ${s.learner} — <span style="color:#29ABE2">${s.trainer||'(no trainer)'}</span></div>`).join('')
+    : '<div style="font-size:0.72rem;color:#ef4444">No slots for current week Monday</div>';
+
+  const fbStatus = (db && fbConnected) ? '<span style="color:#22c55e">● Connected</span>' : '<span style="color:#ef4444">● Not connected</span>';
+
+  let existing = document.getElementById('diag-modal');
+  if(existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'diag-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:99997;display:flex;align-items:center;justify-content:center;';
+  modal.innerHTML = `
+    <div style="background:#0f1e38;border:1px solid #1e3a6e;border-radius:14px;padding:1.5rem;max-width:600px;width:92%;max-height:85vh;overflow-y:auto;font-family:-apple-system,sans-serif;box-shadow:0 20px 60px rgba(0,0,0,0.6)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <div style="font-weight:800;font-size:1rem;color:#EEF2FF;text-transform:uppercase;letter-spacing:0.06em;">🔍 Data Diagnostic</div>
+        <button onclick="document.getElementById('diag-modal').remove()" style="background:none;border:none;color:#7a8db5;font-size:1.1rem;cursor:pointer;">✕</button>
+      </div>
+      <div style="display:flex;gap:1rem;margin-bottom:1rem;font-size:0.75rem;flex-wrap:wrap;">
+        <span>Firebase: ${fbStatus}</span>
+        <span style="color:#9EA3A8">Current week: <strong style="color:#F26522">${currentWeekKey}</strong></span>
+        <span style="color:#9EA3A8">Weeks loaded: <strong style="color:#29ABE2">${weeks.length}</strong></span>
+        <span style="color:#9EA3A8">Trainers: <strong style="color:#22c55e">${trainers.length}</strong></span>
+      </div>
+      <div style="background:#091328;border-radius:8px;overflow:hidden;margin-bottom:1rem;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead><tr style="background:#0D1B3E;border-bottom:2px solid #1e3a6e;">
+            <th style="padding:0.4rem 0.6rem;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.1em;color:#9EA3A8;text-align:left">Week</th>
+            <th style="padding:0.4rem 0.6rem;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.1em;color:#9EA3A8;text-align:center">Slots</th>
+            <th style="padding:0.4rem 0.6rem;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.1em;color:#9EA3A8;text-align:center">Attendance</th>
+            <th style="padding:0.4rem 0.6rem;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.1em;color:#9EA3A8;text-align:center">Tracker</th>
+          </tr></thead>
+          <tbody>${weekInfo}</tbody>
+        </table>
+      </div>
+      <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#7a8db5;margin-bottom:0.4rem;">Sample: Current week Monday slots</div>
+      <div style="background:#091328;border-radius:8px;padding:0.6rem 0.75rem;margin-bottom:1rem;">${sampleHtml}</div>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+        <button onclick="if(db&&fbConnected){_doWrite();setTimeout(()=>alert('Saved to Firebase!'),800);}else{alert('Not connected to Firebase');}" style="background:#22c55e;border:none;border-radius:6px;padding:0.4rem 0.9rem;color:#0B1628;font-size:0.75rem;font-weight:700;cursor:pointer;">💾 Force Save Now</button>
+        <button onclick="location.reload()" style="background:#29ABE2;border:none;border-radius:6px;padding:0.4rem 0.9rem;color:#0B1628;font-size:0.75rem;font-weight:700;cursor:pointer;">🔄 Reload Page</button>
+        <button onclick="document.getElementById('diag-modal').remove()" style="background:none;border:1px solid #1e3a6e;border-radius:6px;padding:0.4rem 0.9rem;color:#7a8db5;font-size:0.75rem;cursor:pointer;">Close</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e=>{ if(e.target===modal) modal.remove(); });
+}
+
 // ═══════════════════════════════════════════════════════════
 // FIREBASE AUTHENTICATION
 // ═══════════════════════════════════════════════════════════
@@ -4299,12 +4277,22 @@ function connectDatabase(){
     fbConnected = true;
     db.ref('skillinabox/data').once('value').then(s=>{
       const existing = s.val();
-      if(existing) applyRemoteData(existing);
+      if(existing && existing.userWeeks && Object.keys(existing.userWeeks).length){
+        // Firebase has real data — use it as source of truth
+        applyRemoteData(existing);
+      } else if(existing){
+        // Firebase has partial data (no userWeeks) — still apply what we have
+        applyRemoteData(existing);
+        // Save the hardcoded seed up to Firebase so it persists going forward
+        setTimeout(()=>{ if(db && fbConnected) _doWrite(); }, 1000);
+      } else {
+        // Firebase is completely empty — save hardcoded seed to Firebase
+        setTimeout(()=>{ if(db && fbConnected) _doWrite(); }, 1000);
+      }
       seedDefaultMsgSlots();
       renderAll();
-      fbListen(); // start listening AFTER applying remote data
+      fbListen();
       setSyncStatus('saved','Live sync on');
-      // Do NOT fbSave() here — would overwrite Firebase with incomplete local state
     }).catch(e=>{
       console.error('DB read error:', e);
       setSyncStatus('error','⚠️ Cannot read data — rules may have expired');
