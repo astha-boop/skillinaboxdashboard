@@ -94,6 +94,9 @@ h1{font-family:'Arial Black','Impact','Trebuchet MS',sans-serif;font-size:2.3rem
 .slot-row.row-active{background:rgba(242,101,34,0.04);}
 .slot-row.row-rs{background:rgba(167,139,250,0.06);border-left:3px solid var(--purple);}
 .slot-time{font-size:0.77rem;font-weight:600;display:flex;flex-direction:column;gap:0.2rem;}
+.time-sel{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:5px;padding:0.22rem 0.3rem;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:0.76rem;font-weight:700;color:var(--text);outline:none;cursor:pointer;}
+.time-sel:focus,.time-sel:hover{border-color:var(--sib-blue);}
+.time-sel option{background:#13264a;}
 .rs-tag{font-size:0.58rem;background:rgba(167,139,250,0.18);color:var(--purple);padding:0.08rem 0.3rem;border-radius:3px;display:inline-block;width:fit-content;}
 .si{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:5px;padding:0.28rem 0.48rem;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;font-size:0.76rem;color:var(--text);outline:none;transition:border-color 0.18s;}
 .si:focus{border-color:var(--sib-blue);background:var(--s3);}
@@ -1834,7 +1837,12 @@ function renderSchedule(){
         const msgConflict = s.trainer ? getMsgSlotConflict(s.trainer, currentDay, s.time) : null;
         rows+='<div class="'+rowCls+'" id="r'+s.id+'">'+
           '<div class="slot-time">'+
-            (si===0?'<span style="font-weight:700;font-size:0.78rem">'+x(t)+'</span>':'<span style="color:var(--faint);font-size:0.68rem"></span>')+
+            (si===0?
+              '<select class="time-sel" onchange="upSlotTime('+s.id+',this.value)" title="Change time">'+
+                FIXED_TIMES.map(ft=>'<option value="'+ft+'"'+(s.time===ft?' selected':'')+'>'+ft+'</option>').join('')+
+                (FIXED_TIMES.includes(s.time)?'':'<option value="'+x(s.time)+'" selected>'+x(s.time)+'</option>')+
+              '</select>'
+            :'<span style="color:var(--faint);font-size:0.68rem"></span>')+
             (isRS?'<span class="rs-tag" style="margin-top:2px">RS</span>':'')+
           '</div>'+
           '<div style="display:flex;flex-direction:column;gap:3px">'+
@@ -1887,6 +1895,23 @@ function renderSchedule(){
   body.innerHTML=rows;
   renderStats();
   document.getElementById('slot-count').textContent=allSlots.length+' sessions';
+}
+
+function upSlotTime(id, newTime){
+  // Find the slot across all days (it may be on any day in the current week)
+  let found = null;
+  for(const d of DAYS){
+    const s=(scheduleByWeek[currentWeekKey][d]||[]).find(x=>x.id===id);
+    if(s){ found=s; break; }
+  }
+  if(!found) return;
+  const oldTime = found.time;
+  if(oldTime === newTime) return;
+  found.time = newTime;
+  logEdit('Schedule','Changed time',`${found.learner||'slot'} · ${currentDay} · "${oldTime}" → "${newTime}"`);
+  fbSave();
+  // Re-render so rows re-sort by new time
+  renderSchedule();
 }
 
 function upSlot(id,f,v){
