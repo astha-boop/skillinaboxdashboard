@@ -1420,9 +1420,6 @@ function deepMerge(target, source){
 
 function applyRemoteData(data){
   if(!data) return;
-  console.log('📦 applyRemoteData called. userWeeks:', data.userWeeks ? Object.keys(data.userWeeks) : 'none');
-  console.log('📦 currentWeekKey inside applyRemoteData:', currentWeekKey);
-
   // ── FIREBASE WINS ──────────────────────────────────────────────────────
   // When Firebase has data, it is the single source of truth.
   // We do NOT merge with hardcoded seed data — we replace it.
@@ -1691,7 +1688,11 @@ function getWeekKey(d){
   const day=dt.getDay();
   const diff=dt.getDate()-(day===0?6:day-1);
   const mon=new Date(dt); mon.setDate(diff);
-  return mon.toISOString().split('T')[0];
+  // Use local date parts to avoid UTC timezone shift (critical for IST/UTC+5:30)
+  const yyyy=mon.getFullYear();
+  const mm=String(mon.getMonth()+1).padStart(2,'0');
+  const dd=String(mon.getDate()).padStart(2,'0');
+  return yyyy+'-'+mm+'-'+dd;
 }
 let currentWeekKey=getWeekKey();
 
@@ -1811,10 +1812,13 @@ function copyFromLastWeek(){
 }
 
 function shiftWeek(delta){
-  // Move currentWeekKey by delta weeks and update the date picker + schedule
   const cur = new Date(currentWeekKey + 'T00:00:00');
   cur.setDate(cur.getDate() + delta * 7);
-  const newDateStr = cur.toISOString().split('T')[0];
+  // Use local date to avoid UTC offset issues (e.g. IST = UTC+5:30)
+  const yyyy=cur.getFullYear();
+  const mm=String(cur.getMonth()+1).padStart(2,'0');
+  const dd=String(cur.getDate()).padStart(2,'0');
+  const newDateStr = yyyy+'-'+mm+'-'+dd;
   const inp = document.getElementById('sched-date');
   if(inp) inp.value = newDateStr;
   dateChanged(newDateStr);
@@ -1851,9 +1855,6 @@ function dateChanged(val){
   renderTaskSections();
 }
 function renderSchedule(){
-  console.log('🖥️ renderSchedule called. currentDay:', currentDay, 'currentWeekKey:', currentWeekKey);
-  console.log('🖥️ schedule object is scheduleByWeek[currentWeekKey]?', schedule === scheduleByWeek[currentWeekKey]);
-  console.log('🖥️ slots for', currentDay, ':', (schedule[currentDay]||[]).length);
   const allSlots=(schedule[currentDay]||[]).slice().sort((a,b)=>tmin(a.time)-tmin(b.time));
   const body=document.getElementById('sched-body');
   const byTime={};
@@ -3812,7 +3813,9 @@ function quickEditTask(cat, id){
 // --- INIT -----------------------------------------------------------------
 document.getElementById('cur-date').textContent=fmtDate();
 const today=new Date();
-document.getElementById('sched-date').value=today.toISOString().split('T')[0];
+// Use local date for date picker (toISOString is UTC and shows wrong date in IST)
+const _todayLocal = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+document.getElementById('sched-date').value=_todayLocal;
 // Set current week key from today
 currentWeekKey=getWeekKey();
 // Switch schedule to current week
@@ -4330,13 +4333,6 @@ function connectDatabase(){
     fbConnected = true;
     db.ref('skillinabox/data').once('value').then(s=>{
       const existing = s.val();
-      console.log('🔥 Firebase data received:', existing ? 'HAS DATA' : 'NULL/EMPTY');
-      if(existing){
-        console.log('🔥 userWeeks keys:', existing.userWeeks ? Object.keys(existing.userWeeks) : 'NONE');
-        console.log('🔥 allWeekData keys:', existing.allWeekData ? Object.keys(existing.allWeekData) : 'NONE');
-      }
-      console.log('🔥 currentWeekKey at load time:', currentWeekKey);
-
       if(existing && existing.userWeeks && Object.keys(existing.userWeeks).length){
         applyRemoteData(existing);
       } else if(existing){
@@ -4379,7 +4375,7 @@ function connectDatabase(){
 
       // Update UI to match the target week
       const _inp2 = document.getElementById('sched-date');
-      if(_inp2) _inp2.value = currentWeekKey;
+      if(_inp2) _inp2.value = currentWeekKey; // currentWeekKey is already local-date-safe
       const _wi2 = document.getElementById('week-indicator');
       if(_wi2) _wi2.textContent = 'Week of '+fmtWeekRange(currentWeekKey);
       const _todayName2 = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
@@ -4388,7 +4384,6 @@ function connectDatabase(){
       document.querySelectorAll('#tab-schedule .day-btn').forEach((b,i)=>b.classList.toggle('active',DAYS[i]===currentDay));
       document.querySelectorAll('#tab-messages .day-btn').forEach((b,i)=>b.classList.toggle('active',DAYS[i]===currentDay));
 
-      console.log('🔥 Landing on week:', currentWeekKey, '— total slots:', _countSlots(currentWeekKey));
 
       renderAll();
       // Second render after short delay — ensures any async UI settling is caught
