@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -4266,9 +4266,20 @@ function initAuth(firebaseApp){
       document.getElementById('user-email-lbl').textContent = user.email;
       connectDatabase();
       setTimeout(renderNotifBell, 2000); // show bell count after data loads
+      // Safety net: if Firebase takes more than 8 seconds, show app anyway
+      setTimeout(()=>{
+        if(document.getElementById('app-loader').style.display !== 'none'){
+          document.getElementById('app-loader').style.display = 'none';
+          document.getElementById('main-content').style.display = '';
+          document.querySelector('.sidebar').style.display = '';
+          document.getElementById('user-badge').style.display = 'flex';
+          renderAll();
+        }
+      }, 8000);
     } else {
-      // Not logged in — show login screen
+      // Not logged in — show login screen, hide loader
       currentUser = null;
+      document.getElementById('app-loader').style.display = 'none';
       document.getElementById('login-overlay').style.display = 'flex';
       document.getElementById('main-content').style.display = 'none';
       document.querySelector('.sidebar').style.display = 'none';
