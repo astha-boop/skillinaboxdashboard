@@ -1547,53 +1547,10 @@ const STYPES=['Regular','Intro Session','Garment Review','Portfolio Meeting','Ex
 
 let trainers=['Priya','Riya','Ruchi','Nandini','Disha','Ayushi Rai','Shiuli','Priyanka G','Jagriti','Bharti','Sneha','Sanjana','Akansha'];
 
-// WEEK SCHEDULES keyed by Monday date of each week
-const scheduleByWeek={
-// ── Week of 9 March 2026 — seeded from PDF ──────────────────────────────
-'2026-03-09':{
-  Monday:[
-  {id:500,time:'10:30',learner:'Farheen Banu',                             note:'',               trainer:'Ayushi Rai',type:'Regular'},
-  {id:501,time:'11:00',learner:'Pooja_(August25)_Skillinabox_Fashion',     note:'',               trainer:'Jagriti',   type:'Regular'},
-  {id:502,time:'11:00',learner:'neetu_(september 25)',                     note:'',               trainer:'Disha',     type:'Regular'},
-  {id:503,time:'11:00',learner:'Sarika_May(25)_Skillinabox',               note:'Garment Review', trainer:'Riya',      type:'Garment Review'},
-  {id:504,time:'11:30',learner:'Ishu Bharti_September25_skillinabox_fashion',note:'',             trainer:'',          type:'Regular'},
-  {id:505,time:'11:30',learner:'Priya Rawat',                              note:'',               trainer:'Jagriti',   type:'Regular'},
-  {id:506,time:'11:30',learner:'Sangeeta(MAR25)',                          note:'Garment Review', trainer:'Priya',     type:'Garment Review'},
-  {id:507,time:'12:00',learner:'reena september 2025',                     note:'',               trainer:'Shiuli',    type:'Regular'},
-  {id:508,time:'12:00',learner:'KAJAL_(July_25)_Skillinabox_25',           note:'',               trainer:'Ayushi Rai',type:'Regular'},
-  {id:509,time:'12:00',learner:'Sadiya Hasan',                             note:'',               trainer:'Jagriti',   type:'Regular'},
-  {id:510,time:'12:30',learner:'Pinki_July(25)_Skillinabox',               note:'',               trainer:'Ruchi',     type:'Regular'},
-  {id:511,time:'12:30',learner:'Sujal_(March 25) Garment Review',          note:'Garment Review', trainer:'Ayushi Rai',type:'Garment Review'},
-  {id:512,time:'1:00', learner:'Chitra_Aug-2025_SIB',                      note:'',               trainer:'Priya',     type:'Regular'},
-  {id:513,time:'1:00', learner:'Shweta_(October25)_SkillinaBox_Fashion',   note:'',               trainer:'',          type:'Regular'},
-  {id:514,time:'1:00', learner:'Taskeen leyaquat',                         note:'',               trainer:'Jagriti',   type:'Regular'},
-  {id:515,time:'1:30', learner:'Kinjal Rawal',                             note:'',               trainer:'',          type:'Regular'},
-  {id:516,time:'1:30', learner:'VANDANA_(October25)_SkillinaBox_Fashion',  note:'',               trainer:'Disha',     type:'Regular'},
-  {id:517,time:'2:45', learner:'Deepika_Oct25_Skillinabox',                note:'NC',             trainer:'Shiuli',    type:'Regular'},
-  {id:518,time:'3:00', learner:'Renu Kumari',                              note:'',               trainer:'Akansha',   type:'Regular'},
-  {id:519,time:'3:00', learner:'Suman_March(25)_Skillinabox',              note:'Garment Review', trainer:'Priya',     type:'Garment Review'},
-  {id:520,time:'3:00', learner:'Bharti Bhati',                             note:'3-3:30',         trainer:'Ayushi Rai',type:'Regular'},
-  {id:521,time:'3:00', learner:'Vaishali thakkar',                         note:'Suspended - EMI needed',trainer:'Disha',type:'Regular'},
-  {id:522,time:'3:30', learner:'Krishna Jain_(May25)_Skillinabox_Fashion', note:'',               trainer:'Sneha',     type:'Regular'},
-  {id:523,time:'3:30', learner:'Nima Lucky Sherpa',                        note:'',               trainer:'Ruchi',     type:'Regular'},
-  {id:524,time:'4:00', learner:'Kanchan Yadav',                            note:'',               trainer:'Priya',     type:'Regular'},
-  {id:525,time:'4:00', learner:'Rajnandani kumar',                         note:'',               trainer:'Jagriti',   type:'Regular'},
-  {id:526,time:'4:00', learner:'Shagufta_(August25)_Skillinabox_FD',       note:'',               trainer:'Ruchi',     type:'Regular'},
-  {id:527,time:'4:30', learner:'SHUCHI BALA',                              note:'',               trainer:'Shiuli',    type:'Regular'},
-  {id:528,time:'4:30', learner:'alshifa_april25',                          note:'',               trainer:'Disha',     type:'Regular'},
-  {id:529,time:'4:30', learner:'Manshi Negi',                              note:'',               trainer:'',          type:'Regular'},
-  {id:530,time:'5:00', learner:'Riha_NID_August25_Skillinabox',            note:'',               trainer:'Riya',      type:'Regular'},
-  {id:531,time:'5:00', learner:'Khushi NID intro',                         note:"Don't send the link",trainer:'Shiuli',type:'Intro Session'},
-  {id:532,time:'5:00', learner:'Sonia NA',                                 note:'',               trainer:'Disha',     type:'Regular'},
-  {id:533,time:'5:30', learner:'Pinky choudhary',                          note:'',               trainer:'Jagriti',   type:'Regular'},
-  {id:534,time:'5:30', learner:'Purvi Upadhaya_(August 25)_Skillinabox_Fashion',note:'',          trainer:'Sneha',     type:'Regular'},
-  {id:535,time:'6:30', learner:'Gulafsha na',                              note:'',               trainer:'Ayushi Rai',type:'Regular'},
-  {id:536,time:'7:00', learner:'Rachna Kosta',                             note:'',               trainer:'Riya',      type:'Regular'}
-  ],
-  Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]
-}
-};
-let schedule=scheduleByWeek['2026-03-09'];
+// ALL schedule data comes from Firebase — no hardcoded seed.
+// scheduleByWeek is populated entirely by applyRemoteData() on load.
+const scheduleByWeek={};
+let schedule={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
 
 
 // Fixed time slots always shown
@@ -1774,7 +1731,7 @@ function copyFromLastWeek(){
   // Find the previous week key
   const cur = new Date(currentWeekKey + 'T00:00:00');
   cur.setDate(cur.getDate() - 7);
-  const prevKey = cur.toISOString().split('T')[0];
+  const prevKey = cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0')+'-'+String(cur.getDate()).padStart(2,'0');
   const prevWeek = scheduleByWeek[prevKey];
   if(!prevWeek || DAYS.reduce((n,d)=>n+(prevWeek[d]||[]).length,0)===0){
     alert('No data found for previous week ('+prevKey+'). Navigate to a week that has data first.');
@@ -3818,10 +3775,8 @@ const _todayLocal = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(
 document.getElementById('sched-date').value=_todayLocal;
 // Set current week key from today
 currentWeekKey=getWeekKey();
-// Switch schedule to current week
-if(!scheduleByWeek[currentWeekKey]){
-  scheduleByWeek[currentWeekKey]={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
-}
+// schedule will be populated from Firebase — start with empty placeholder
+scheduleByWeek[currentWeekKey]={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
 schedule=scheduleByWeek[currentWeekKey];
 document.getElementById('week-indicator').textContent='Week of '+fmtWeekRange(currentWeekKey);
 const todayName=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][today.getDay()];
