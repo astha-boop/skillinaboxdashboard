@@ -727,6 +727,7 @@ tr:hover td{background:rgba(41,171,226,0.03);}
       <button class="tab-btn" id="tb-messages" onclick="switchTab('messages',this)">💬 Message Slots</button>
       <button class="tab-btn" id="tb-tasks" onclick="switchTab('tasks',this)">✅ Task Manager</button>
       <button class="tab-btn" id="tb-ext" onclick="switchTab('ext',this)">📋 Extension Tracker</button>
+      <button class="tab-btn" id="tb-trash" onclick="switchTab('trash',this)">🗑️ Trash</button>
     </div>
   </div>
 
@@ -1007,6 +1008,36 @@ tr:hover td{background:rgba(41,171,226,0.03);}
     </div>
   </div>
 </template>
+
+<template id="trash-tab-html">
+  <div class="tab-panel" id="tab-trash">
+    <div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:1.2rem;flex-wrap:wrap;">
+      <div>
+        <div style="font-size:1rem;font-weight:700;color:var(--text);">🗑️ Trash</div>
+        <div style="font-size:0.72rem;color:var(--muted);margin-top:0.1rem;">Deleted sessions — restore or permanently delete</div>
+      </div>
+      <button onclick="emptyTrash()" style="margin-left:auto;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--red);border-radius:7px;padding:0.35rem 1rem;font-size:0.76rem;font-weight:600;cursor:pointer;font-family:inherit;">🗑️ Empty Trash</button>
+    </div>
+    <div id="trash-count" style="font-size:0.72rem;color:var(--muted);margin-bottom:0.75rem;"></div>
+    <div class="log-wrap">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="background:var(--s2);border-bottom:2px solid var(--border);">
+            <th style="padding:0.5rem 0.75rem;text-align:left;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--sib-grey);font-weight:600;">Learner</th>
+            <th style="padding:0.5rem 0.75rem;text-align:left;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--sib-grey);font-weight:600;">Day / Time</th>
+            <th style="padding:0.5rem 0.75rem;text-align:left;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--sib-grey);font-weight:600;">Trainer</th>
+            <th style="padding:0.5rem 0.75rem;text-align:left;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--sib-grey);font-weight:600;">Week</th>
+            <th style="padding:0.5rem 0.75rem;text-align:left;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--sib-grey);font-weight:600;">Deleted By</th>
+            <th style="padding:0.5rem 0.75rem;text-align:left;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--sib-grey);font-weight:600;">Deleted At</th>
+            <th style="padding:0.5rem 0.75rem;text-align:center;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--sib-grey);font-weight:600;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="trash-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</template>
+
 <!-- EXTENSION TRACKER MODAL -->
 <div class="modal-bg" id="ext-modal" onclick="if(event.target===this)closeExtModal()">
   <div class="modal" style="width:560px;">
@@ -1252,7 +1283,7 @@ function _buildPayload(){
   });
   return {
     trainers, userWeeks, allWeekData, learnerNotes, notifications,
-    editHistory, extRecords, extId,
+    editHistory, extRecords, extId, trashBin,
     slotId, msgId, trackerId, taskId,
     deletedSlotIds: [...deletedSlotIds],
   };
@@ -1300,19 +1331,25 @@ function delSlot(id){
   if(!confirm('Remove this session?'))return;
   const wk=scheduleByWeek[currentWeekKey];
   if(!wk)return;
-  // Log before removing
   const slot=findSlot(id);
-  logEdit('Schedule','Deleted slot',`${slot?slot.learner:'slot'} · ${currentDay} ${slot?slot.time:''} · Trainer: ${slot?slot.trainer||'—':'—'}`);
-  // Remove from every day in this week
+  if(slot){
+    // Move to trash bin before removing
+    trashBin.push({
+      id: Date.now()+'_t',
+      slot: {...slot},
+      day: currentDay,
+      weekKey: currentWeekKey,
+      deletedAt: new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short'})+' '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),
+      deletedBy: currentUser?currentUser.email.split('@')[0]:'unknown'
+    });
+    logEdit('Schedule','Deleted slot',`${slot.learner} · ${currentDay} ${slot.time} · moved to Trash`);
+  }
   for(const d of DAYS){wk[d]=(wk[d]||[]).filter(s=>s.id!==id);}
   schedule=wk;
-  // Add to permanent blacklist
   deletedSlotIds.add(Number(id));
-  // Re-render immediately so user sees the deletion
   renderSchedule();
-  // Write to Firebase immediately — no debounce
   fbSaveNow();
-  setSyncStatus('saved','Deleted ✓');
+  setSyncStatus('saved','Moved to trash ✓');
 }
 
 function deepMerge(target, source){
@@ -1380,28 +1417,13 @@ function applyRemoteData(data){
   if(data.taskId    && data.taskId    > taskId)    taskId    = data.taskId;
   if(data.extRecords && Array.isArray(data.extRecords)) extRecords = data.extRecords;
   if(data.extId     && data.extId     > extId)     extId     = data.extId;
+  if(data.trashBin  && Array.isArray(data.trashBin)) trashBin = data.trashBin;
 
   // Re-point schedule to current week
   if(!scheduleByWeek[currentWeekKey])
     scheduleByWeek[currentWeekKey]={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
   schedule = scheduleByWeek[currentWeekKey];
 }
-
-function fbListen(){
-  db.ref('skillinabox/data').on('value', snap=>{
-    // Skip if we are currently writing to Firebase
-    if(_isSaving) return;
-    const data = snap.val();
-    if(!data) return;
-    applyRemoteData(data);
-    renderAll();
-    if(typeof taskView!=='undefined' && taskView==='calendar') renderTaskCalendar();
-    if(typeof schedView!=='undefined' && schedView==='calendar') renderCalendar();
-    setSyncStatus('saved','Live sync on');
-  });
-}
-
-
 
 function connectFirebase(){
   const apiKey   = document.getElementById('setup-apikey').value.trim();
@@ -1525,8 +1547,10 @@ let currentDay='Monday', currentMsgDay='Monday', activeNoteId=null;
 // slotId set below
 let slotId=1101, msgId=200, trackerId=100;
 let addFormOpen=false;
-// Track deleted slot IDs so Firebase live-listener never re-adds them
+// Permanent blacklist of deleted slot IDs — never re-added from Firebase
 let deletedSlotIds = new Set();
+// Trash bin — deleted slots live here so they can be restored or permanently purged
+let trashBin = []; // [{id, slot, day, weekKey, deletedAt, deletedBy}]
 
 // ── EDIT HISTORY ─────────────────────────────────────────────────────────
 // section: 'Schedule' | 'Attendance' | 'Message Slots' | 'Tasks' | 'Tracker'
@@ -3650,6 +3674,7 @@ function renderAll(){
   document.getElementById('task-date-lbl').textContent=fmtDate();
   renderTaskSections();
   renderNotifBell();
+  updateTrashBadge();
 }
 
 // ── EXTENSION TRACKER ────────────────────────────────────────────────────
@@ -3660,12 +3685,14 @@ let extId = 0;
 
 function wExt(){ return extRecords; }
 
-// Mount the tab panel from template (once)
-(function mountExtTab(){
-  const tmpl = document.getElementById('ext-tab-html');
-  if(!tmpl) return;
-  const panel = tmpl.content.querySelector('#tab-ext').cloneNode(true);
-  document.querySelector('main').appendChild(panel);
+// Mount both tab panels from templates (once on load)
+(function mountTemplateTabs(){
+  ['ext-tab-html','trash-tab-html'].forEach(tmplId=>{
+    const tmpl = document.getElementById(tmplId);
+    if(!tmpl) return;
+    const panel = tmpl.content.firstElementChild.cloneNode(true);
+    document.querySelector('main').appendChild(panel);
+  });
 })();
 
 function switchTab(name,btn){
@@ -3680,6 +3707,102 @@ function switchTab(name,btn){
   if(name==='messages'){renderMsgBody();renderMsgStats();}
   if(name==='tasks'){renderTaskSections();}
   if(name==='ext'){renderExtTab();}
+  if(name==='trash'){renderTrashTab();}
+}
+
+// ── TRASH BIN ─────────────────────────────────────────────────────────────
+function renderTrashTab(){
+  const tbody = document.getElementById('trash-tbody');
+  const countEl = document.getElementById('trash-count');
+  if(!tbody) return;
+
+  // Update trash badge on tab button
+  updateTrashBadge();
+
+  if(!trashBin.length){
+    if(countEl) countEl.textContent = 'Trash is empty';
+    tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:2.5rem;color:var(--muted);font-style:italic;">🗑️ Trash is empty — deleted sessions will appear here</td></tr>`;
+    return;
+  }
+
+  if(countEl) countEl.textContent = `${trashBin.length} item${trashBin.length!==1?'s':''} in trash`;
+
+  // Newest first
+  const sorted = [...trashBin].reverse();
+  tbody.innerHTML = sorted.map(entry=>`
+    <tr style="border-bottom:1px solid var(--border);" onmouseover="this.style.background='rgba(239,68,68,0.04)'" onmouseout="this.style.background=''">
+      <td style="padding:0.55rem 0.75rem;">
+        <div style="font-weight:600;font-size:0.78rem;">${x(entry.slot.learner||'—')}</div>
+        <div style="font-size:0.63rem;color:var(--muted);">${x(entry.slot.type||'Regular')}</div>
+      </td>
+      <td style="padding:0.55rem 0.75rem;font-size:0.76rem;">${x(entry.day||'—')} · ${x(entry.slot.time||'—')}</td>
+      <td style="padding:0.55rem 0.75rem;font-size:0.76rem;color:var(--muted);">${x(entry.slot.trainer||'—')}</td>
+      <td style="padding:0.55rem 0.75rem;font-size:0.68rem;color:var(--sib-blue);">Week of ${x(fmtWeekRange(entry.weekKey))}</td>
+      <td style="padding:0.55rem 0.75rem;font-size:0.72rem;">
+        <span style="background:rgba(239,68,68,0.12);color:var(--red);border-radius:4px;padding:0.08rem 0.32rem;">${x(entry.deletedBy||'?')}</span>
+      </td>
+      <td style="padding:0.55rem 0.75rem;font-size:0.68rem;color:var(--muted);">${x(entry.deletedAt||'—')}</td>
+      <td style="padding:0.55rem 0.75rem;text-align:center;white-space:nowrap;">
+        <button onclick="restoreSlot('${entry.id}')"
+          style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);color:#22c55e;border-radius:5px;padding:0.2rem 0.55rem;font-size:0.7rem;cursor:pointer;font-family:inherit;margin-right:4px;">
+          ↩ Restore
+        </button>
+        <button onclick="purgeSlot('${entry.id}')"
+          style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:var(--red);border-radius:5px;padding:0.2rem 0.45rem;font-size:0.7rem;cursor:pointer;font-family:inherit;">
+          ✕
+        </button>
+      </td>
+    </tr>`).join('');
+}
+
+function updateTrashBadge(){
+  const btn = document.getElementById('tb-trash');
+  if(!btn) return;
+  const count = trashBin.length;
+  btn.textContent = count > 0 ? `🗑️ Trash (${count})` : '🗑️ Trash';
+  btn.style.color = count > 0 ? 'var(--red)' : '';
+}
+
+function restoreSlot(trashId){
+  const entry = trashBin.find(e=>e.id===trashId);
+  if(!entry) return;
+  // Restore the slot back to its original week/day
+  if(!scheduleByWeek[entry.weekKey]){
+    scheduleByWeek[entry.weekKey]={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
+  }
+  const dayArr = scheduleByWeek[entry.weekKey][entry.day] || [];
+  // Don't restore if a slot with same id already exists
+  if(!dayArr.find(s=>s.id===entry.slot.id)){
+    dayArr.push({...entry.slot, att:''});
+    scheduleByWeek[entry.weekKey][entry.day] = dayArr;
+  }
+  // Remove from blacklist so it renders
+  deletedSlotIds.delete(Number(entry.slot.id));
+  // Remove from trash
+  trashBin = trashBin.filter(e=>e.id!==trashId);
+  logEdit('Schedule','Restored slot',`${entry.slot.learner} · ${entry.day} ${entry.slot.time}`);
+  fbSaveNow();
+  renderTrashTab();
+  // If we're looking at the week this slot belongs to, refresh schedule
+  if(entry.weekKey===currentWeekKey) renderSchedule();
+}
+
+function purgeSlot(trashId){
+  const entry = trashBin.find(e=>e.id===trashId);
+  if(!entry) return;
+  if(!confirm(`Permanently delete "${entry.slot.learner}"? This cannot be undone.`)) return;
+  trashBin = trashBin.filter(e=>e.id!==trashId);
+  // Keep in deletedSlotIds so it never comes back from Firebase
+  fbSaveNow();
+  renderTrashTab();
+}
+
+function emptyTrash(){
+  if(!trashBin.length) return;
+  if(!confirm(`Permanently delete all ${trashBin.length} items in trash? This cannot be undone.`)) return;
+  trashBin = [];
+  fbSaveNow();
+  renderTrashTab();
 }
 
 const EXT_TYPE_COLORS={
