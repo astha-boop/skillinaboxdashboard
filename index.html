@@ -435,6 +435,327 @@ tr:hover td{background:rgba(41,171,226,0.03);}
 #user-badge .user-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#29ABE2,#F26522);display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#fff;flex-shrink:0;}
 #logout-btn{background:none;border:1px solid rgba(239,68,68,0.3);border-radius:5px;color:#ef4444;font-size:0.65rem;padding:0.18rem 0.5rem;cursor:pointer;transition:all 0.15s;font-family:inherit;}
 #logout-btn:hover{background:rgba(239,68,68,0.1);}
+
+/* ═══════════════════════════════════════════════════════
+   MOBILE RESPONSIVE — phones < 768px
+   ═══════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── LAYOUT ── */
+  .app { flex-direction: column; }
+  .sidebar {
+    display: none !important; /* hidden — replaced by bottom nav */
+  }
+  .main {
+    padding: 0.75rem 0.75rem 5rem; /* bottom padding for bottom nav */
+    width: 100%;
+  }
+
+  /* ── TOP BAR ── */
+  .top-bar {
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-bottom: 0.85rem;
+  }
+  .dept-tag { display: none; }
+  .top-title { gap: 0.4rem; }
+  .top-title > div > div:first-child { display: none; } /* hide stripes on mobile */
+  h1 { font-size: 1.4rem; }
+  .top-actions {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    width: 100%;
+  }
+  .top-actions .btn { font-size: 0.7rem; padding: 0.38rem 0.6rem; flex: 1; text-align: center; }
+  #sync-status-inline { font-size: 0.65rem; }
+
+  /* ── TABS ── */
+  .tabs {
+    gap: 0;
+    padding: 0 0.2rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab-btn { font-size: 0.72rem; padding: 0.5rem 0.7rem; white-space: nowrap; }
+
+  /* ── STATS ── */
+  .stats-row {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.4rem;
+    margin-bottom: 0.75rem;
+  }
+  .stats-row .stat-card:nth-child(4),
+  .stats-row .stat-card:nth-child(5) {
+    grid-column: span 1;
+  }
+  .stat-card { padding: 0.6rem 0.7rem; border-radius: 8px; }
+  .stat-lbl { font-size: 0.52rem; }
+  .stat-val { font-size: 1.3rem; }
+
+  /* ── DAY ROW ── */
+  .day-row {
+    gap: 0.3rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .day-row::-webkit-scrollbar { display: none; }
+  .day-btn { padding: 0.32rem 0.55rem; font-size: 0.7rem; flex-shrink: 0; }
+  .date-inp { font-size: 0.7rem; padding: 0.32rem 0.45rem; min-width: 110px; }
+  #week-indicator { font-size: 0.62rem; padding: 0.22rem 0.45rem; }
+
+  /* ── SCHEDULE TABLE → CARD VIEW ── */
+  .sched-wrap { border-radius: 10px; }
+  .sched-head { display: none; } /* hide column headers — info shown on each card */
+
+  .slot-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    position: relative;
+  }
+  .slot-row.row-rs { border-left: 3px solid var(--purple); }
+
+  /* Time badge — top left */
+  .slot-time {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.75rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--sib-blue);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.15rem;
+  }
+  .time-sel {
+    width: auto;
+    min-width: 62px;
+    font-size: 0.72rem;
+    padding: 0.15rem 0.25rem;
+    font-weight: 700;
+    color: var(--sib-blue);
+    background: transparent;
+    border: 1px solid rgba(41,171,226,0.3);
+  }
+
+  /* Row 1: learner name (full width, padded right for time) */
+  .slot-row > div:nth-child(2) {
+    padding-right: 72px;
+  }
+  .slot-row > div:nth-child(2) .si {
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0.35rem 0.5rem;
+  }
+
+  /* Row 2: trainer + attendance side by side */
+  .slot-row > div:nth-child(3),
+  .slot-row > select:nth-child(4),
+  .slot-row > select:nth-child(5),
+  .slot-row > select:nth-child(6) {
+    /* All selects in a flex row */
+  }
+
+  /* Mobile slot controls row */
+  .mobile-slot-controls {
+    display: flex;
+    gap: 0.35rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .mobile-slot-controls .sel,
+  .mobile-slot-controls .att-sel {
+    flex: 1;
+    min-width: 80px;
+    font-size: 0.74rem;
+    padding: 0.32rem 0.38rem;
+  }
+  .mobile-slot-controls .del-btn {
+    padding: 0.32rem 0.5rem;
+    font-size: 0.7rem;
+    flex-shrink: 0;
+  }
+  .mobile-slot-controls .comment-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+    flex-shrink: 0;
+  }
+
+  /* Hide co-trainer on mobile (too cramped) */
+  .slot-row > select[title="Co-Trainer (optional)"] { display: none; }
+
+  /* Add slot form */
+  .add-row-bar { flex-direction: column; gap: 0.4rem; padding: 0.6rem; }
+  .add-form { gap: 0.35rem; }
+  .add-form .nf { font-size: 0.78rem; padding: 0.38rem 0.5rem; }
+
+  /* ── WEEK NAV BUTTONS ── */
+  button[onclick="shiftWeek(-1)"],
+  button[onclick="shiftWeek(1)"] {
+    padding: 0.28rem 0.45rem;
+    font-size: 0.7rem;
+  }
+  button[onclick="copyFromLastWeek()"] {
+    font-size: 0.66rem;
+    padding: 0.26rem 0.5rem;
+  }
+
+  /* ── TRACKER TABLE → CARDS ── */
+  .tr-wrap { border-radius: 10px; }
+  .tr-head { display: none; }
+  .tr-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--s2);
+  }
+  .dc-box { height: 28px; font-size: 0.82rem; }
+
+  /* ── TRAINER CARDS ── */
+  .trainer-grid { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  .tr-card { padding: 0.75rem; }
+
+  /* ── MESSAGE SLOTS ── */
+  .msg-head { flex-direction: column; gap: 0.3rem; padding: 0.6rem 0.75rem; }
+  .msg-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.65rem 0.75rem;
+  }
+  .msg-time { font-size: 0.85rem; font-weight: 700; }
+  .msg-stats { grid-template-columns: repeat(2,1fr); }
+
+  /* ── TASK MANAGER ── */
+  .task-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.65rem 0.75rem;
+  }
+  .task-col-head { display: none; }
+
+  /* ── MODALS ── */
+  .modal {
+    width: 95vw !important;
+    max-height: 85vh;
+    overflow-y: auto;
+    margin: 0.5rem;
+  }
+  .qamodal { width: 95vw !important; }
+
+  /* ── MISC ── */
+  .log-wrap { border-radius: 10px; }
+  .log-wrap table { font-size: 0.72rem; }
+  .log-wrap table th, .log-wrap table td { padding: 0.4rem 0.5rem; }
+}
+
+/* ── BOTTOM NAV (mobile only) ── */
+#mobile-bottom-nav {
+  display: none;
+}
+@media (max-width: 768px) {
+  #mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #0D1B3E;
+    border-top: 1px solid #1e3a6e;
+    z-index: 1000;
+    height: 56px;
+    align-items: stretch;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.4);
+  }
+  .mob-nav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: none;
+    border: none;
+    color: #5a7ab0;
+    font-size: 0.52rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: all 0.15s;
+    padding: 0.3rem 0.1rem;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  .mob-nav-btn .mob-icon { font-size: 1.2rem; line-height: 1; }
+  .mob-nav-btn.active { color: #F26522; }
+  .mob-nav-btn.active .mob-icon-bar {
+    width: 20px; height: 2px; background: #F26522;
+    border-radius: 1px; margin-bottom: 2px;
+  }
+
+  /* Mobile header — compact */
+  .top-bar > div:first-child > div:last-child { display: none; } /* hide date */
+
+  /* Make schedule slot rows look like cards on mobile */
+  .sched-wrap { box-shadow: none; }
+}
+
+/* ── MOBILE SLOT CARD REDESIGN ── */
+@media (max-width: 768px) {
+  /* Override the grid slot-row to be a proper card */
+  .slot-row {
+    grid-template-columns: unset !important;
+    display: block !important;
+    padding: 0.8rem !important;
+    margin: 0 !important;
+    position: relative;
+  }
+  .slot-row > * { display: block; width: 100%; margin-bottom: 0.35rem; }
+  .slot-row > *:last-child { margin-bottom: 0; }
+
+  /* Time in top-right corner */
+  .slot-time {
+    position: absolute !important;
+    top: 0.7rem !important;
+    right: 0.75rem !important;
+    width: auto !important;
+    margin: 0 !important;
+  }
+
+  /* Learner input takes most of the width */
+  .slot-row > div:nth-child(2) {
+    padding-right: 75px;
+    margin-bottom: 0.4rem;
+  }
+
+  /* Trainer + Attendance in a row */
+  .slot-row-controls {
+    display: flex !important;
+    gap: 0.35rem;
+    align-items: center;
+    flex-wrap: nowrap;
+  }
+  .slot-row-controls .sel { flex: 1.5; min-width: 0; }
+  .slot-row-controls .att-sel { flex: 1; min-width: 0; }
+  .slot-row-controls .comment-btn { flex-shrink: 0; }
+  .slot-row-controls .del-btn { flex-shrink: 0; }
+
+  /* Comments panel */
+  .slot-comments { border-radius: 0 0 6px 6px; }
+}
+
 </style>
 </head>
 <body>
@@ -564,6 +885,38 @@ tr:hover td{background:rgba(41,171,226,0.03);}
     <div id="not-logged-in-msg" style="font-size:0.65rem;color:#3a5888;text-align:center;">Not signed in</div>
   </div>
 </aside>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav id="mobile-bottom-nav">
+  <button class="mob-nav-btn active" id="mob-schedule" onclick="switchTab('schedule',this);setMobActive(this)">
+    <span class="mob-icon">📅</span>Schedule
+  </button>
+  <button class="mob-nav-btn" id="mob-tracker" onclick="switchTab('tracker',this);setMobActive(this)">
+    <span class="mob-icon">📊</span>Tracker
+  </button>
+  <button class="mob-nav-btn" id="mob-trainers" onclick="switchTab('trainers',this);setMobActive(this)">
+    <span class="mob-icon">👩‍🏫</span>Trainers
+  </button>
+  <button class="mob-nav-btn" id="mob-messages" onclick="switchTab('messages',this);setMobActive(this)">
+    <span class="mob-icon">💬</span>Messages
+  </button>
+  <button class="mob-nav-btn" id="mob-tasks" onclick="switchTab('tasks',this);setMobActive(this)">
+    <span class="mob-icon">✅</span>Tasks
+  </button>
+  <button class="mob-nav-btn" id="mob-more" onclick="toggleMobMore()">
+    <span class="mob-icon">⋯</span>More
+  </button>
+</nav>
+
+<!-- MOBILE MORE MENU -->
+<div id="mob-more-menu" style="display:none;position:fixed;bottom:56px;left:0;right:0;background:#0D1B3E;border-top:1px solid #1e3a6e;z-index:999;padding:0.5rem;">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;padding:0.4rem;">
+    <button onclick="switchTab('ext',document.getElementById('mob-more'));closeMobMore()" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:0.6rem;color:var(--text);font-size:0.78rem;cursor:pointer;font-family:inherit;">📋 Extensions</button>
+    <button onclick="switchTab('trash',document.getElementById('mob-more'));closeMobMore()" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:0.6rem;color:var(--text);font-size:0.78rem;cursor:pointer;font-family:inherit;">🗑️ Trash</button>
+    <button onclick="exportCSV();closeMobMore()" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:0.6rem;color:var(--text);font-size:0.78rem;cursor:pointer;font-family:inherit;">⬇ Export CSV</button>
+    <button onclick="flashSave();closeMobMore()" style="background:var(--sib-orange);border:none;border-radius:8px;padding:0.6rem;color:white;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;">✓ Save All</button>
+  </div>
+</div>
 
 <!-- MAIN -->
 <main class="main" id="main-content" style="display:none;">
@@ -1864,6 +2217,7 @@ function renderSchedule(){
             '<option value="">+ Co-trainer</option>'+
             trainers.map(tr=>'<option'+(s.coTrainer===tr?' selected':'')+'>'+x(tr)+'</option>').join('')+
           '</select>'+
+          '<div class="slot-row-controls">'+ 
           '<select class="'+attCls+'" onchange="upAtt('+s.id+',this)">'+
             '<option value=""'+(wd.att===''?' selected':'')+'></option>'+
             '<option value="P"'+(wd.att==='P'?' selected':'')+'>P  Present</option>'+
@@ -1877,7 +2231,8 @@ function renderSchedule(){
           // Comment button — own column
           '<button class="comment-btn'+(notes.length?' has-comments':'')+'" onclick="toggleComments('+s.id+',event)">💬'+(notes.length?' '+notes.length:'')+'</button>'+
           // Remove button — own column
-          '<button class="del-btn" onclick="delSlot('+s.id+')" style="justify-self:center;">✕</button>'+
+          '<button class="del-btn" onclick="delSlot('+s.id+')">✕</button>'+ 
+          '</div>'+ 
           // Comment panel spans all columns
           '<div class="slot-comments" id="sc-'+s.id+'">'+
             '<div class="comment-history" id="ch-'+s.id+'">'+renderCommentHistory(s.id)+'</div>'+
@@ -4266,6 +4621,26 @@ function deleteExt(id){
 })();
 
 function seedDefaultMsgSlots(){ return false; }
+
+// ── MOBILE NAV ────────────────────────────────────────────────────────────
+function setMobActive(btn){
+  document.querySelectorAll('.mob-nav-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function toggleMobMore(){
+  const m=document.getElementById('mob-more-menu');
+  m.style.display = m.style.display==='none'?'block':'none';
+}
+function closeMobMore(){
+  document.getElementById('mob-more-menu').style.display='none';
+}
+document.addEventListener('click',e=>{
+  const menu=document.getElementById('mob-more-menu');
+  const btn=document.getElementById('mob-more');
+  if(menu&&btn&&!menu.contains(e.target)&&!btn.contains(e.target)){
+    menu.style.display='none';
+  }
+});
 
 // ── DIAGNOSTIC: shows what data is actually loaded ────────────────────────
 function showDiagnostic(){
