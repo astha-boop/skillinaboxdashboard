@@ -588,6 +588,7 @@ tr:hover td{background:rgba(41,171,226,0.03);}
       <div id="sync-status-inline" style="font-size:0.68rem;color:#9EA3A8;display:flex;align-items:center;gap:0.35rem;">
         <span id="sync-dot" style="width:7px;height:7px;border-radius:50%;background:#22c55e;flex-shrink:0;display:inline-block;"></span>
         <span id="sync-text">Connecting…</span>
+        <button id="fb-fix-btn" onclick="document.getElementById('rules-fix-modal').style.display='flex'" title="Fix Firebase rules" style="display:none;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);border-radius:5px;color:#ef4444;font-size:0.65rem;padding:0.15rem 0.45rem;cursor:pointer;font-family:inherit;font-weight:600;">🔧 Fix</button>
       </div>
       <div style="position:relative;">
         <button id="notif-bell" onclick="toggleNotifPanel()" title="Notifications">🔔<span id="notif-count"></span></button>
@@ -1249,9 +1250,11 @@ function setSyncStatus(state, text){
   const bar = document.getElementById('sync-bar');
   const dot = document.getElementById('sync-dot');
   const txt = document.getElementById('sync-text');
+  const fixBtn = document.getElementById('fb-fix-btn');
   if(bar){ bar.className = state; }
-  if(dot){ dot.className = state === 'saved' ? '' : state; }
-  if(txt){ txt.textContent = text; }
+  if(dot){ dot.className = state === 'saved' ? '' : state; dot.style.background = state==='error'?'#ef4444':state==='syncing'?'#F7C325':'#22c55e'; }
+  if(txt){ txt.textContent = text; txt.style.color = state==='error'?'#ef4444':state==='syncing'?'#F7C325':'#9EA3A8'; }
+  if(fixBtn){ fixBtn.style.display = state==='error' ? 'inline-block' : 'none'; }
 }
 
 // ── FIREBASE SYNC ─────────────────────────────────────────────────────────
@@ -1289,6 +1292,7 @@ function _buildPayload(){
   };
 }
 
+let _saveErrorShown = false;
 function _doWrite(){
   if(!db || !fbConnected) return;
   _pendingWriteCount++;          // mark: we have an in-flight write
@@ -1296,14 +1300,50 @@ function _doWrite(){
   db.ref('skillinabox/data').set(payload)
     .then(()=>{
       _pendingWriteCount = Math.max(0, _pendingWriteCount-1);
+      _saveErrorShown = false;
+      hideSaveErrorBanner();
       setSyncStatus('saved','All changes saved ✓');
       setTimeout(()=>setSyncStatus('saved','Live sync on'), 1500);
     })
     .catch(e=>{
       _pendingWriteCount = Math.max(0, _pendingWriteCount-1);
-      setSyncStatus('error','Save failed — check connection');
-      console.error(e);
+      setSyncStatus('error','⚠️ Save failed — data NOT being saved!');
+      console.error('Firebase save error:', e);
+      // Show a prominent banner so the user knows their data is at risk
+      if(!_saveErrorShown){
+        _saveErrorShown = true;
+        showSaveErrorBanner(e);
+      }
     });
+}
+
+function showSaveErrorBanner(err){
+  let existing = document.getElementById('save-error-banner');
+  if(existing) existing.remove();
+  const isPermission = err && (err.code === 'PERMISSION_DENIED' || (err.message||'').includes('Permission denied') || (err.message||'').includes('permission'));
+  const banner = document.createElement('div');
+  banner.id = 'save-error-banner';
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#b91c1c;color:white;padding:0.75rem 1.2rem;font-size:0.82rem;font-family:-apple-system,BlinkMacSystemFont,sans-serif;display:flex;align-items:center;gap:0.75rem;box-shadow:0 4px 24px rgba(0,0,0,0.5);';
+  banner.innerHTML = isPermission
+    ? `<span style="font-size:1.2rem">🔒</span>
+       <div style="flex:1">
+         <strong>Firebase rules have expired — your data is NOT being saved!</strong><br>
+         <span style="opacity:0.9;font-size:0.76rem;">Click "Fix Now" for step-by-step instructions (takes 2 minutes).</span>
+       </div>
+       <button onclick="document.getElementById('rules-fix-modal').style.display='flex';document.getElementById('save-error-banner').remove()" style="background:white;color:#b91c1c;border:none;padding:0.3rem 0.85rem;border-radius:5px;cursor:pointer;font-size:0.78rem;font-weight:700;white-space:nowrap;margin-right:4px;">🔧 Fix Now</button>
+       <button onclick="document.getElementById('save-error-banner').remove()" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:0.3rem 0.7rem;border-radius:5px;cursor:pointer;font-size:0.8rem;white-space:nowrap;">Dismiss</button>`
+    : `<span style="font-size:1.2rem">⚠️</span>
+       <div style="flex:1">
+         <strong>Save failed — your data is NOT being saved!</strong><br>
+         <span style="opacity:0.9;font-size:0.76rem;">Error: ${(err&&err.message)||'Unknown error'}. Check your internet connection or Firebase setup.</span>
+       </div>
+       <button onclick="document.getElementById('rules-fix-modal').style.display='flex';document.getElementById('save-error-banner').remove()" style="background:white;color:#b91c1c;border:none;padding:0.3rem 0.85rem;border-radius:5px;cursor:pointer;font-size:0.78rem;font-weight:700;white-space:nowrap;margin-right:4px;">🔧 Fix</button>
+       <button onclick="document.getElementById('save-error-banner').remove()" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:0.3rem 0.7rem;border-radius:5px;cursor:pointer;font-size:0.8rem;white-space:nowrap;">Dismiss</button>`;
+  document.body.prepend(banner);
+}
+function hideSaveErrorBanner(){
+  const b = document.getElementById('save-error-banner');
+  if(b) b.remove();
 }
 
 // Immediate write — used by delSlot so deletion hits Firebase with no debounce
@@ -1413,10 +1453,71 @@ function applyRemoteData(data){
     });
   }
 
-  // Replace allWeekData completely
+  // Deep-merge allWeekData — never overwrite existing local entries with empty remote ones
+  // This prevents attendance marks, tasks, and notes from being wiped on reload
   if(data.allWeekData){
     Object.keys(data.allWeekData).forEach(wk=>{
-      allWeekData[wk] = data.allWeekData[wk];
+      const remote = data.allWeekData[wk];
+      if(!remote) return;
+      if(!allWeekData[wk]){
+        // Week doesn't exist locally — take it from remote directly
+        allWeekData[wk] = remote;
+      } else {
+        const local = allWeekData[wk];
+        // Deep-merge attData: remote wins for any slot that has real data
+        if(remote.attData){
+          if(!local.attData) local.attData = {};
+          Object.keys(remote.attData).forEach(slotId=>{
+            const rd = remote.attData[slotId];
+            const ld = local.attData[slotId];
+            if(!ld){
+              local.attData[slotId] = rd;
+            } else {
+              if(rd.att && rd.att !== '') ld.att = rd.att;
+              if(rd.note && rd.note !== '') ld.note = rd.note;
+            }
+          });
+        }
+        // Deep-merge msgDoneData
+        if(remote.msgDoneData){
+          if(!local.msgDoneData) local.msgDoneData = {};
+          Object.assign(local.msgDoneData, remote.msgDoneData);
+        }
+        // Deep-merge msgSlots per day — remote wins when it has data
+        if(remote.msgSlots){
+          if(!local.msgSlots) local.msgSlots = {};
+          DAYS.forEach(day=>{
+            if(remote.msgSlots[day] && remote.msgSlots[day].length > 0){
+              local.msgSlots[day] = remote.msgSlots[day];
+            }
+          });
+        }
+        // Deep-merge tasks per category — union by id, remote wins for updates
+        if(remote.tasks){
+          if(!local.tasks) local.tasks = {};
+          ['training','operations','marketing','admin','other'].forEach(cat=>{
+            const rt = remote.tasks[cat] || [];
+            const lt = local.tasks[cat] || [];
+            if(!rt.length){ local.tasks[cat] = lt; return; }
+            if(!lt.length){ local.tasks[cat] = rt; return; }
+            const byId = {};
+            lt.forEach(t=>{ byId[t.id] = {...t}; });
+            rt.forEach(t=>{ byId[t.id] = t; }); // remote wins for updates
+            local.tasks[cat] = Object.values(byId);
+          });
+        }
+        // Deep-merge tracker — union by id, remote wins
+        if(Array.isArray(remote.tracker)){
+          if(!Array.isArray(local.tracker) || !local.tracker.length){
+            local.tracker = remote.tracker;
+          } else {
+            const byId = {};
+            local.tracker.forEach(t=>{ byId[t.id] = {...t}; });
+            remote.tracker.forEach(t=>{ byId[t.id] = t; });
+            local.tracker = Object.values(byId);
+          }
+        }
+      }
     });
   }
 
@@ -3447,7 +3548,11 @@ function renderMsgStats(){
 // --- MISC -----------------------------------------------------------------
 function flashSave(){
   const btn=document.querySelector('.btn-primary');
-  btn.textContent=' Saved!'; btn.style.background='#22c55e';
+  btn.textContent=' Saving…'; btn.style.background='#22c55e';
+  // Actually trigger a Firebase save
+  if(db && fbConnected){
+    _doWrite();
+  }
   setTimeout(()=>{btn.textContent=' Save All';btn.style.background='';},2000);
 }
 function exportCSV(){
@@ -4177,6 +4282,11 @@ function connectDatabase(){
       fbListen(); // start listening AFTER applying remote data
       setSyncStatus('saved','Live sync on');
       // Do NOT fbSave() here — would overwrite Firebase with incomplete local state
+    }).catch(e=>{
+      console.error('DB read error:', e);
+      setSyncStatus('error','⚠️ Cannot read data — rules may have expired');
+      showSaveErrorBanner(e);
+      renderAll();
     });
   } catch(e){
     console.error('DB connect error:',e);
@@ -4199,5 +4309,46 @@ function connectDatabase(){
 })();
 
 </script>
+
+<!-- FIREBASE RULES FIX MODAL -->
+<div id="rules-fix-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:99998;align-items:center;justify-content:center;">
+  <div style="background:#0f1e38;border:1px solid #1e3a6e;border-radius:14px;padding:1.8rem;max-width:560px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.6);font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.1rem;">
+      <div style="font-family:'Arial Black',sans-serif;font-size:1.1rem;font-weight:800;color:#EEF2FF;text-transform:uppercase;letter-spacing:0.04em;">🔧 Fix Firebase Rules</div>
+      <button onclick="document.getElementById('rules-fix-modal').style.display='none'" style="background:none;border:none;color:#7a8db5;font-size:1.1rem;cursor:pointer;">✕</button>
+    </div>
+    <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:0.75rem 1rem;margin-bottom:1.2rem;font-size:0.78rem;color:#fca5a5;line-height:1.5;">
+      <strong>⚠️ Your data is not being saved!</strong><br>
+      Firebase "test mode" database rules expire after 30 days. This is the most common reason data vanishes on reload.
+    </div>
+    <div style="font-size:0.8rem;color:#7a8db5;margin-bottom:1rem;line-height:1.6;">Follow these steps to fix it in ~2 minutes:</div>
+    <div style="display:flex;flex-direction:column;gap:0.75rem;margin-bottom:1.3rem;">
+      <div style="display:flex;gap:0.75rem;align-items:flex-start;font-size:0.78rem;color:#EEF2FF;line-height:1.5;">
+        <span style="background:#29ABE2;color:#0B1628;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.7rem;flex-shrink:0;margin-top:1px;">1</span>
+        <span>Open <a href="https://console.firebase.google.com" target="_blank" style="color:#29ABE2;font-weight:600;">console.firebase.google.com</a> → select your project (<strong>skillinabox-63ad8</strong>)</span>
+      </div>
+      <div style="display:flex;gap:0.75rem;align-items:flex-start;font-size:0.78rem;color:#EEF2FF;line-height:1.5;">
+        <span style="background:#29ABE2;color:#0B1628;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.7rem;flex-shrink:0;margin-top:1px;">2</span>
+        <span>In the left sidebar: <strong>Build → Realtime Database → Rules</strong> tab</span>
+      </div>
+      <div style="display:flex;gap:0.75rem;align-items:flex-start;font-size:0.78rem;color:#EEF2FF;line-height:1.5;">
+        <span style="background:#F26522;color:white;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.7rem;flex-shrink:0;margin-top:1px;">3</span>
+        <span>Replace <strong>all the text</strong> in the rules editor with this:</span>
+      </div>
+    </div>
+    <div style="background:#091328;border:1px solid #1e3a6e;border-radius:8px;padding:0.75rem 1rem;margin-bottom:1.2rem;font-family:monospace;font-size:0.78rem;color:#22c55e;position:relative;">
+      {<br>&nbsp;&nbsp;"rules": {<br>&nbsp;&nbsp;&nbsp;&nbsp;".read": "auth != null",<br>&nbsp;&nbsp;&nbsp;&nbsp;".write": "auth != null"<br>&nbsp;&nbsp;}<br>}
+      <button onclick="navigator.clipboard.writeText('{\n  \"rules\": {\n    \".read\": \"auth != null\",\n    \".write\": \"auth != null\"\n  }\n}').then(()=>{this.textContent=\'✓ Copied!\';setTimeout(()=>this.textContent=\'Copy\',2000)})" style="position:absolute;top:8px;right:8px;background:rgba(41,171,226,0.15);border:1px solid rgba(41,171,226,0.3);border-radius:5px;color:#29ABE2;font-size:0.68rem;padding:0.18rem 0.55rem;cursor:pointer;font-family:-apple-system,sans-serif;">Copy</button>
+    </div>
+    <div style="font-size:0.78rem;color:#EEF2FF;display:flex;gap:0.75rem;align-items:flex-start;line-height:1.5;margin-bottom:1.3rem;">
+      <span style="background:#F26522;color:white;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.7rem;flex-shrink:0;margin-top:1px;">4</span>
+      <span>Click the <strong>Publish</strong> button → come back here and <strong>refresh the page</strong>. Your data will load.</span>
+    </div>
+    <div style="display:flex;gap:0.5rem;">
+      <a href="https://console.firebase.google.com/project/skillinabox-63ad8/database/skillinabox-63ad8-default-rtdb/rules" target="_blank" style="flex:1;background:#29ABE2;color:#0B1628;border:none;border-radius:7px;padding:0.55rem 1rem;font-size:0.8rem;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:0.3rem;">🔗 Open Firebase Rules Directly</a>
+      <button onclick="document.getElementById('rules-fix-modal').style.display='none'" style="background:none;border:1px solid #1e3a6e;color:#7a8db5;border-radius:7px;padding:0.55rem 1rem;font-size:0.8rem;cursor:pointer;">Close</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
