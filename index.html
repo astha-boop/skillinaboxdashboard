@@ -1836,8 +1836,6 @@ function dateChanged(val){
     scheduleByWeek[currentWeekKey]={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
   }
   schedule=scheduleByWeek[currentWeekKey];
-  // Remember this week for next reload
-  try{ localStorage.setItem('sib_lastWeek', currentWeekKey); }catch(e){}
   // Update week indicator
   const wi=document.getElementById('week-indicator');
   if(wi) wi.textContent='Week of '+fmtWeekRange(currentWeekKey);
@@ -3811,6 +3809,8 @@ function quickEditTask(cat, id){
 }
 
 // --- INIT -----------------------------------------------------------------
+// Clear any stale week memory from previous buggy versions
+try{ localStorage.removeItem('sib_lastWeek'); }catch(e){}
 document.getElementById('cur-date').textContent=fmtDate();
 const today=new Date();
 // Use local date for date picker (toISOString is UTC and shows wrong date in IST)
@@ -4344,41 +4344,22 @@ function connectDatabase(){
 
       seedDefaultMsgSlots();
 
-      // After Firebase loads — restore the exact week the user was last on.
-      // Priority: 1) localStorage remembered week, 2) week with most slots, 3) current week
-      function _countSlots(wk){ return DAYS.reduce((n,d)=>n+((scheduleByWeek[wk]||{})[d]||[]).length,0); }
-
-      let _targetWeek = currentWeekKey;
-      try{
-        const _saved = localStorage.getItem('sib_lastWeek');
-        if(_saved && scheduleByWeek[_saved]) _targetWeek = _saved;
-      }catch(e){}
-
-      // If saved/current week has very few slots, find the most populated week
-      if(_countSlots(_targetWeek) < 5){
-        const _best = Object.keys(scheduleByWeek)
-          .map(wk=>({wk, n:_countSlots(wk)}))
-          .filter(x=>x.n>0)
-          .sort((a,b)=>b.n-a.n||b.wk.localeCompare(a.wk))[0];
-        if(_best) _targetWeek = _best.wk;
-      }
-
-      if(_targetWeek !== currentWeekKey){
-        currentWeekKey = _targetWeek;
-      }
-      try{ localStorage.setItem('sib_lastWeek', currentWeekKey); }catch(e){}
-
+      // After Firebase loads — always stay on the actual current week.
+      // currentWeekKey was already set to today's week during INIT.
+      // Just make sure the schedule pointer and UI are correct.
       if(!scheduleByWeek[currentWeekKey]){
         scheduleByWeek[currentWeekKey]={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
       }
       schedule = scheduleByWeek[currentWeekKey];
 
-      // Update UI to match the target week
+      // Sync date picker and week indicator to current week
+      const _now = new Date();
+      const _todayStr = _now.getFullYear()+'-'+String(_now.getMonth()+1).padStart(2,'0')+'-'+String(_now.getDate()).padStart(2,'0');
       const _inp2 = document.getElementById('sched-date');
-      if(_inp2) _inp2.value = currentWeekKey; // currentWeekKey is already local-date-safe
+      if(_inp2) _inp2.value = _todayStr;
       const _wi2 = document.getElementById('week-indicator');
       if(_wi2) _wi2.textContent = 'Week of '+fmtWeekRange(currentWeekKey);
-      const _todayName2 = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
+      const _todayName2 = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][_now.getDay()];
       currentDay = DAYS.includes(_todayName2) ? _todayName2 : 'Monday';
       currentMsgDay = currentDay;
       document.querySelectorAll('#tab-schedule .day-btn').forEach((b,i)=>b.classList.toggle('active',DAYS[i]===currentDay));
