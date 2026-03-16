@@ -2232,20 +2232,24 @@ function findSlot(id){for(const d of DAYS){const s=(schedule[d]||[]).find(x=>x.i
 
 // Robust learner name match — handles "Aasma_June25" vs "Aasma", "parul pal" vs "Parul Pal"
 function learnersMatch(schedName, trackerName){
-  const a = (schedName||'').toLowerCase().trim();
-  const b = (trackerName||'').toLowerCase().trim();
+  const norm = n => (n||'').toLowerCase().replace(/[_\-()]/g,' ').replace(/\s+/g,' ').trim();
+  const a = norm(schedName);
+  const b = norm(trackerName);
   if(!a||!b) return false;
   if(a===b) return true;
-  // Extract first meaningful word (before _, space, ( )
-  const firstA = a.split(/[_\s(]/)[0];
-  const firstB = b.split(/[_\s(]/)[0];
-  if(firstA.length>=3 && firstB.length>=3 && (a.startsWith(firstB)||b.startsWith(firstA))) return true;
-  // Full first+last name match (e.g. "parul pal" in "parul pal_may25_sib")
-  if(firstA===firstB){
-    const wordsA=a.split(/[_\s(]/).filter(Boolean);
-    const wordsB=b.split(/[_\s(]/).filter(Boolean);
-    if(wordsA.length>=2&&wordsB.length>=2&&wordsA[1]===wordsB[1]) return true;
-    if(wordsA.length===1||wordsB.length===1) return true; // single-word first name match
+  const wa = a.split(' ').filter(Boolean);
+  const wb = b.split(' ').filter(Boolean);
+  const fa = wa[0]||'', fb = wb[0]||'';
+  const sa = wa[1]||'', sb = wb[1]||'';
+  // Require BOTH first AND second word to match
+  // "Astha Jain" ≠ "Astha Rana", "Parul Pal" == "Parul Pal_May25_SIB"
+  if(fa===fb && fa.length>=3){
+    if(sa && sb && sa===sb) return true; // both words match
+    if(!sa && !sb) return true;          // both single-word names, same word
+    // One has a last name and other doesn't — only match if one clearly starts with the other
+    // e.g. "astha" matches "astha jain" ONLY if the schedule name has no last name
+    if(!sa && wb.length>=1) return false; // tracker has last name but sched doesn't — ambiguous
+    if(!sb && wa.length>=1) return false; // sched has last name but tracker doesn't — ambiguous
   }
   return false;
 }
@@ -2350,19 +2354,28 @@ function toggleAddForm(){
 let _pendingSlot = null; // holds the slot data waiting for user confirmation
 
 function findDuplicateSlots(learnerName){
-  // Search all days of current week for this learner (case-insensitive, normalised)
   const norm = n => (n||'').toLowerCase().replace(/[_\-()]/g,' ').replace(/\s+/g,' ').trim();
   const target = norm(learnerName);
+  const targetWords = target.split(' ').filter(Boolean);
   const found = [];
   DAYS.forEach(day=>{
     (schedule[day]||[]).forEach(s=>{
       if(!s.learner) return;
       const sn = norm(s.learner);
-      // Match if same base name (first meaningful word matches)
-      const firstWord = t => t.split(' ')[0];
-      if(sn===target || (firstWord(sn)===firstWord(target) && firstWord(target).length>3)){
-        found.push({...s, day});
+      if(sn===target){ found.push({...s, day}); return; }
+      // Only match if BOTH first AND second word match
+      // e.g. "Astha Jain" ≠ "Astha Rana" (second words differ)
+      // but "Parul Pal" == "Parul Pal_may25" (both words match)
+      const snWords = sn.split(' ').filter(Boolean);
+      if(targetWords.length>=2 && snWords.length>=2){
+        if(targetWords[0]===snWords[0] && targetWords[1]===snWords[1])
+          found.push({...s, day});
+      } else if(targetWords.length===1 && snWords.length===1){
+        // Single-word names: only exact match
+        if(targetWords[0]===snWords[0] && targetWords[0].length>4)
+          found.push({...s, day});
       }
+      // If one has 1 word and other has 2+, don't match — too ambiguous
     });
   });
   return found;
