@@ -744,7 +744,9 @@ tr:hover td{background:rgba(41,171,226,0.03);}
       <button class="day-btn" onclick="pickDay('Saturday',this)">Sat</button>
       <button class="day-btn" onclick="pickDay('Sunday',this)">Sun</button>
       <input type="date" class="date-inp" id="sched-date" onchange="dateChanged(this.value)">
+      <button onclick="shiftWeek(-1)" title="Previous week" style="background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:0.28rem 0.6rem;color:var(--muted);cursor:pointer;font-size:0.8rem;transition:all 0.18s;margin-left:0.3rem;" onmouseover="this.style.borderColor='var(--sib-blue)'" onmouseout="this.style.borderColor='var(--border)'">◀ Prev</button>
       <span id="week-indicator" style="font-size:0.7rem;color:var(--sib-blue);background:rgba(41,171,226,0.1);border:1px solid rgba(41,171,226,0.25);border-radius:6px;padding:0.28rem 0.65rem;white-space:nowrap;margin-left:0.3rem"></span>
+      <button onclick="shiftWeek(1)" title="Next week" style="background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:0.28rem 0.6rem;color:var(--muted);cursor:pointer;font-size:0.8rem;transition:all 0.18s;" onmouseover="this.style.borderColor='var(--sib-blue)'" onmouseout="this.style.borderColor='var(--border)'">Next ▶</button>
       <!-- View toggle -->
       <div style="display:flex;gap:0.3rem;margin-left:0.5rem;border:1px solid var(--border);border-radius:7px;padding:2px;background:var(--s1);">
         <button id="view-list-btn" onclick="setSchedView('list')" style="background:var(--sib-blue);color:white;border:none;border-radius:5px;padding:0.28rem 0.7rem;font-size:0.72rem;cursor:pointer;font-family:inherit;font-weight:600;transition:all 0.18s;">☰ List</button>
@@ -1353,10 +1355,16 @@ function fbSaveNow(){
   _doWrite();
 }
 
+let _fbListenIgnoreUntil = 0; // timestamp: ignore remote updates until after this time
+
 function fbListen(){
+  // Ignore the immediate echo of our own just-loaded snapshot for 3 seconds
+  _fbListenIgnoreUntil = Date.now() + 3000;
   db.ref('skillinabox/data').on('value', snap=>{
     // If WE have a write in flight, this event is our own echo — skip it
     if(_pendingWriteCount > 0) return;
+    // Also ignore the immediate echo right after initial load
+    if(Date.now() < _fbListenIgnoreUntil) return;
     const data = snap.val();
     if(!data) return;
     applyRemoteData(data);
@@ -1443,6 +1451,15 @@ function applyRemoteData(data){
                 ['trainer','coTrainer','type','learner','note','addedBy','addedAt'].forEach(f=>{
                   if(rs[f]!==undefined) ls[f]=rs[f];
                 });
+              }
+            }
+            // Migrate legacy att stored directly on slot object → into allWeekData attData
+            if(rs.att && rs.att !== ''){
+              if(!allWeekData[wk]) allWeekData[wk] = {};
+              if(!allWeekData[wk].attData) allWeekData[wk].attData = {};
+              if(!allWeekData[wk].attData[rs.id] || !allWeekData[wk].attData[rs.id].att){
+                if(!allWeekData[wk].attData[rs.id]) allWeekData[wk].attData[rs.id] = {att:'',note:''};
+                allWeekData[wk].attData[rs.id].att = rs.att;
               }
             }
           });
@@ -1582,13 +1599,9 @@ function connectFirebase(){
             setSyncStatus('saved','Live sync on');
             // No fbSave() on startup — would overwrite Firebase with stale local state
           }
-          if(existing && existing.userWeeks && existing.userWeeks['2026-03-02']){
-            // Wipe old hardcoded data then start fresh
-            db.ref('skillinabox/data').remove().then(finishLoad);
-          } else {
-            if(existing) applyRemoteData(existing);
-            finishLoad();
-          }
+          // Always apply remote data — never wipe Firebase
+          if(existing) applyRemoteData(existing);
+          finishLoad();
         });
       } else {
         errEl.textContent='Connected to Firebase but database not reachable. Check Database URL.';
@@ -1832,6 +1845,16 @@ function pickDay(day,btn){
   if(schedView==='calendar') renderCalendar();
   else renderSchedule();
 }
+function shiftWeek(delta){
+  // Move currentWeekKey by delta weeks and update the date picker + schedule
+  const cur = new Date(currentWeekKey + 'T00:00:00');
+  cur.setDate(cur.getDate() + delta * 7);
+  const newDateStr = cur.toISOString().split('T')[0];
+  const inp = document.getElementById('sched-date');
+  if(inp) inp.value = newDateStr;
+  dateChanged(newDateStr);
+}
+
 function dateChanged(val){
   if(!val)return;
   const dn=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
