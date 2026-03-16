@@ -4209,18 +4209,30 @@ function initAuth(firebaseApp){
     if(user){
       currentUser = user;
       document.getElementById('login-overlay').style.display = 'none';
-      document.getElementById('main-content').style.display = '';
-      document.querySelector('.sidebar').style.display = '';
-      document.getElementById('user-badge').style.display = 'flex';
+      // Keep main hidden — show it only AFTER Firebase data loads (prevents blank flash)
+      document.getElementById('main-content').style.display = 'none';
+      document.querySelector('.sidebar').style.display = 'none';
+      document.getElementById('user-badge').style.display = 'none';
+      document.getElementById('app-loader').style.display = 'flex';
       if(document.getElementById('not-logged-in-msg')) document.getElementById('not-logged-in-msg').style.display='none';
       const initials = (user.email||'?').split('@')[0].substring(0,2).toUpperCase();
       document.getElementById('user-avatar').textContent = initials;
       document.getElementById('user-email-lbl').textContent = user.email;
       connectDatabase();
       setTimeout(renderNotifBell, 2000);
+      // Safety: if Firebase takes >6s, show app anyway
+      setTimeout(()=>{
+        if(document.getElementById('app-loader').style.display !== 'none'){
+          document.getElementById('app-loader').style.display = 'none';
+          document.getElementById('main-content').style.display = '';
+          document.querySelector('.sidebar').style.display = '';
+          document.getElementById('user-badge').style.display = 'flex';
+        }
+      }, 6000);
     } else {
       // Not logged in — show login screen, hide loader
       currentUser = null;
+      document.getElementById('app-loader').style.display = 'none';
       document.getElementById('login-overlay').style.display = 'flex';
       document.getElementById('main-content').style.display = 'none';
       document.querySelector('.sidebar').style.display = 'none';
@@ -4322,15 +4334,19 @@ function connectDatabase(){
 
 
       renderAll();
-      // Second render after short delay — ensures any async UI settling is caught
-      setTimeout(()=>{
-        schedule = scheduleByWeek[currentWeekKey];
-        renderAll();
-      }, 300);
       fbListen();
+      // Show app now that data is ready
+      document.getElementById('app-loader').style.display = 'none';
+      document.getElementById('main-content').style.display = '';
+      document.querySelector('.sidebar').style.display = '';
+      document.getElementById('user-badge').style.display = 'flex';
       setSyncStatus('saved','Live sync on');
     }).catch(e=>{
       console.error('🔥 DB read error:', e);
+      document.getElementById('app-loader').style.display = 'none';
+      document.getElementById('main-content').style.display = '';
+      document.querySelector('.sidebar').style.display = '';
+      document.getElementById('user-badge').style.display = 'flex';
       setSyncStatus('error','⚠️ Cannot read data — rules may have expired');
       showSaveErrorBanner(e);
       renderAll();
@@ -4398,5 +4414,22 @@ function connectDatabase(){
   </div>
 </div>
 
+
+<!-- APP LOADING SCREEN -->
+<div id="app-loader" style="display:none;position:fixed;inset:0;background:#0B1628;z-index:9000;flex-direction:column;align-items:center;justify-content:center;gap:1.2rem;">
+  <div style="display:flex;flex-direction:column;gap:5px;">
+    <div style="width:40px;height:6px;background:#29ABE2;border-radius:2px;"></div>
+    <div style="width:40px;height:6px;background:#F26522;border-radius:2px;"></div>
+    <div style="width:40px;height:6px;background:#9EA3A8;border-radius:2px;"></div>
+  </div>
+  <div style="font-family:'Arial Black',sans-serif;font-size:1.3rem;font-weight:900;color:#EEF2FF;letter-spacing:0.06em;">SKILL<sup style="font-size:0.5rem;color:#9EA3A8">®</sup> in a box</div>
+  <div style="display:flex;gap:8px;">
+    <div style="width:10px;height:10px;border-radius:50%;background:#29ABE2;animation:ldp 1s ease-in-out infinite;"></div>
+    <div style="width:10px;height:10px;border-radius:50%;background:#F26522;animation:ldp 1s ease-in-out 0.2s infinite;"></div>
+    <div style="width:10px;height:10px;border-radius:50%;background:#9EA3A8;animation:ldp 1s ease-in-out 0.4s infinite;"></div>
+  </div>
+  <div style="font-size:0.78rem;color:#7a8db5;">Loading your schedule…</div>
+</div>
+<style>@keyframes ldp{0%,100%{opacity:0.3;transform:scale(0.8);}50%{opacity:1;transform:scale(1.2);}}</style>
 </body>
 </html>
