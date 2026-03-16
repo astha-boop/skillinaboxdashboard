@@ -1367,6 +1367,11 @@ function fbListen(){
     const data = snap.val();
     if(!data) return;
     applyRemoteData(data);
+    // Re-point schedule after remote update
+    if(!scheduleByWeek[currentWeekKey]){
+      scheduleByWeek[currentWeekKey]={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
+    }
+    schedule = scheduleByWeek[currentWeekKey];
     renderAll();
     if(typeof taskView!=='undefined' && taskView==='calendar') renderTaskCalendar();
     if(typeof schedView!=='undefined' && schedView==='calendar') renderCalendar();
@@ -4290,6 +4295,12 @@ function connectDatabase(){
         setTimeout(()=>{ if(db && fbConnected) _doWrite(); }, 1000);
       }
       seedDefaultMsgSlots();
+      // Re-point schedule to current week AFTER Firebase data is loaded
+      // (the old reference was set before data arrived and still points to empty object)
+      if(!scheduleByWeek[currentWeekKey]){
+        scheduleByWeek[currentWeekKey]={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
+      }
+      schedule = scheduleByWeek[currentWeekKey];
       renderAll();
       fbListen();
       setSyncStatus('saved','Live sync on');
