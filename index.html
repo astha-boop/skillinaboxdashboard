@@ -746,6 +746,7 @@ tr:hover td{background:rgba(41,171,226,0.03);}
       <button class="day-btn" onclick="pickDay('Sunday',this)">Sun</button>
       <input type="date" class="date-inp" id="sched-date" onchange="dateChanged(this.value)">
       <button onclick="shiftWeek(-1)" title="Previous week" style="background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:0.28rem 0.6rem;color:var(--muted);cursor:pointer;font-size:0.8rem;transition:all 0.18s;margin-left:0.3rem;" onmouseover="this.style.borderColor='var(--sib-blue)'" onmouseout="this.style.borderColor='var(--border)'">◀ Prev</button>
+      <button onclick="copyFromLastWeek()" title="Copy all slots from previous week into this week" style="background:rgba(247,195,37,0.12);border:1px solid rgba(247,195,37,0.3);border-radius:6px;padding:0.28rem 0.7rem;color:#F7C325;cursor:pointer;font-size:0.73rem;transition:all 0.18s;font-family:inherit;" onmouseover="this.style.background='rgba(247,195,37,0.22)'" onmouseout="this.style.background='rgba(247,195,37,0.12)'">📋 Copy from prev week</button>
       <span id="week-indicator" style="font-size:0.7rem;color:var(--sib-blue);background:rgba(41,171,226,0.1);border:1px solid rgba(41,171,226,0.25);border-radius:6px;padding:0.28rem 0.65rem;white-space:nowrap;margin-left:0.3rem"></span>
       <button onclick="shiftWeek(1)" title="Next week" style="background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:0.28rem 0.6rem;color:var(--muted);cursor:pointer;font-size:0.8rem;transition:all 0.18s;" onmouseover="this.style.borderColor='var(--sib-blue)'" onmouseout="this.style.borderColor='var(--border)'">Next ▶</button>
       <!-- View toggle -->
@@ -1419,6 +1420,8 @@ function deepMerge(target, source){
 
 function applyRemoteData(data){
   if(!data) return;
+  console.log('📦 applyRemoteData called. userWeeks:', data.userWeeks ? Object.keys(data.userWeeks) : 'none');
+  console.log('📦 currentWeekKey inside applyRemoteData:', currentWeekKey);
 
   // ── FIREBASE WINS ──────────────────────────────────────────────────────
   // When Firebase has data, it is the single source of truth.
@@ -1766,6 +1769,49 @@ function pickDay(day,btn){
   if(schedView==='calendar') renderCalendar();
   else renderSchedule();
 }
+function copyFromLastWeek(){
+  // Find the previous week key
+  const cur = new Date(currentWeekKey + 'T00:00:00');
+  cur.setDate(cur.getDate() - 7);
+  const prevKey = cur.toISOString().split('T')[0];
+  const prevWeek = scheduleByWeek[prevKey];
+  if(!prevWeek || DAYS.reduce((n,d)=>n+(prevWeek[d]||[]).length,0)===0){
+    alert('No data found for previous week ('+prevKey+'). Navigate to a week that has data first.');
+    return;
+  }
+  const currentSlots = DAYS.reduce((n,d)=>n+(scheduleByWeek[currentWeekKey][d]||[]).length,0);
+  if(currentSlots > 0){
+    if(!confirm('This week already has '+currentSlots+' slots. Copy from previous week will ADD those slots on top. Continue?')) return;
+  } else {
+    if(!confirm('Copy all slots from week of '+fmtWeekRange(prevKey)+' into this week ('+fmtWeekRange(currentWeekKey)+')?
+
+Attendance and comments will NOT be copied — only learner names, trainers, and session types.')) return;
+  }
+  // Copy slots with new IDs, clearing attendance
+  DAYS.forEach(day=>{
+    const src = prevWeek[day] || [];
+    if(!scheduleByWeek[currentWeekKey][day]) scheduleByWeek[currentWeekKey][day] = [];
+    src.forEach(s=>{
+      scheduleByWeek[currentWeekKey][day].push({
+        id: ++slotId,
+        time: s.time,
+        learner: s.learner,
+        trainer: s.trainer || '',
+        coTrainer: s.coTrainer || '',
+        type: s.type || 'Regular',
+        note: s.note || '',
+        addedBy: currentUser ? currentUser.email.split('@')[0] : 'copy',
+        addedAt: new Date().toISOString(),
+      });
+    });
+  });
+  schedule = scheduleByWeek[currentWeekKey];
+  logEdit('Schedule','Copied from previous week','Copied slots from '+prevKey+' → '+currentWeekKey);
+  fbSave();
+  renderAll();
+  setSyncStatus('syncing','Copied & saving…');
+}
+
 function shiftWeek(delta){
   // Move currentWeekKey by delta weeks and update the date picker + schedule
   const cur = new Date(currentWeekKey + 'T00:00:00');
@@ -1788,6 +1834,8 @@ function dateChanged(val){
     scheduleByWeek[currentWeekKey]={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
   }
   schedule=scheduleByWeek[currentWeekKey];
+  // Remember this week for next reload
+  try{ localStorage.setItem('sib_lastWeek', currentWeekKey); }catch(e){}
   // Update week indicator
   const wi=document.getElementById('week-indicator');
   if(wi) wi.textContent='Week of '+fmtWeekRange(currentWeekKey);
@@ -1805,6 +1853,9 @@ function dateChanged(val){
   renderTaskSections();
 }
 function renderSchedule(){
+  console.log('🖥️ renderSchedule called. currentDay:', currentDay, 'currentWeekKey:', currentWeekKey);
+  console.log('🖥️ schedule object is scheduleByWeek[currentWeekKey]?', schedule === scheduleByWeek[currentWeekKey]);
+  console.log('🖥️ slots for', currentDay, ':', (schedule[currentDay]||[]).length);
   const allSlots=(schedule[currentDay]||[]).slice().sort((a,b)=>tmin(a.time)-tmin(b.time));
   const body=document.getElementById('sched-body');
   const byTime={};
@@ -4282,30 +4333,71 @@ function connectDatabase(){
     fbConnected = true;
     db.ref('skillinabox/data').once('value').then(s=>{
       const existing = s.val();
+      console.log('🔥 Firebase data received:', existing ? 'HAS DATA' : 'NULL/EMPTY');
+      if(existing){
+        console.log('🔥 userWeeks keys:', existing.userWeeks ? Object.keys(existing.userWeeks) : 'NONE');
+        console.log('🔥 allWeekData keys:', existing.allWeekData ? Object.keys(existing.allWeekData) : 'NONE');
+      }
+      console.log('🔥 currentWeekKey at load time:', currentWeekKey);
+
       if(existing && existing.userWeeks && Object.keys(existing.userWeeks).length){
-        // Firebase has real data — use it as source of truth
         applyRemoteData(existing);
       } else if(existing){
-        // Firebase has partial data (no userWeeks) — still apply what we have
         applyRemoteData(existing);
-        // Save the hardcoded seed up to Firebase so it persists going forward
         setTimeout(()=>{ if(db && fbConnected) _doWrite(); }, 1000);
       } else {
-        // Firebase is completely empty — save hardcoded seed to Firebase
         setTimeout(()=>{ if(db && fbConnected) _doWrite(); }, 1000);
       }
+
       seedDefaultMsgSlots();
-      // Re-point schedule to current week AFTER Firebase data is loaded
-      // (the old reference was set before data arrived and still points to empty object)
+
+      // After Firebase loads — restore the exact week the user was last on.
+      // Priority: 1) localStorage remembered week, 2) week with most slots, 3) current week
+      function _countSlots(wk){ return DAYS.reduce((n,d)=>n+((scheduleByWeek[wk]||{})[d]||[]).length,0); }
+
+      let _targetWeek = currentWeekKey;
+      try{
+        const _saved = localStorage.getItem('sib_lastWeek');
+        if(_saved && scheduleByWeek[_saved]) _targetWeek = _saved;
+      }catch(e){}
+
+      // If saved/current week has very few slots, find the most populated week
+      if(_countSlots(_targetWeek) < 5){
+        const _best = Object.keys(scheduleByWeek)
+          .map(wk=>({wk, n:_countSlots(wk)}))
+          .filter(x=>x.n>0)
+          .sort((a,b)=>b.n-a.n||b.wk.localeCompare(a.wk))[0];
+        if(_best) _targetWeek = _best.wk;
+      }
+
+      if(_targetWeek !== currentWeekKey){
+        currentWeekKey = _targetWeek;
+      }
+      try{ localStorage.setItem('sib_lastWeek', currentWeekKey); }catch(e){}
+
       if(!scheduleByWeek[currentWeekKey]){
         scheduleByWeek[currentWeekKey]={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
       }
       schedule = scheduleByWeek[currentWeekKey];
+
+      // Update UI to match the target week
+      const _inp2 = document.getElementById('sched-date');
+      if(_inp2) _inp2.value = currentWeekKey;
+      const _wi2 = document.getElementById('week-indicator');
+      if(_wi2) _wi2.textContent = 'Week of '+fmtWeekRange(currentWeekKey);
+      const _todayName2 = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
+      currentDay = DAYS.includes(_todayName2) ? _todayName2 : 'Monday';
+      currentMsgDay = currentDay;
+      document.querySelectorAll('#tab-schedule .day-btn').forEach((b,i)=>b.classList.toggle('active',DAYS[i]===currentDay));
+      document.querySelectorAll('#tab-messages .day-btn').forEach((b,i)=>b.classList.toggle('active',DAYS[i]===currentDay));
+
+      console.log('🔥 Landing on week:', currentWeekKey, '— total slots:', _countSlots(currentWeekKey));
+
       renderAll();
       fbListen();
       setSyncStatus('saved','Live sync on');
     }).catch(e=>{
-      console.error('DB read error:', e);
+      console.error('🔥 DB read error:', e);
       setSyncStatus('error','⚠️ Cannot read data — rules may have expired');
       showSaveErrorBanner(e);
       renderAll();
