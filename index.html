@@ -4133,6 +4133,100 @@ function deleteExt(id){
   renderExtTab();
 }
 
+
+// ── SEEDED DATA: March 16 2026 (Monday) — injected from PDF ────────────────
+(function seedMarch16(){
+  const WK = '2026-03-16';
+  const SLOTS = [
+  {id:2001,time:'10:30',learner:'Naincy Verma',trainer:'',coTrainer:'',type:'Regular',note:'Reschedule',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2002,time:'10:30',learner:'Shraddha Patel',trainer:'Riya',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2003,time:'11:00',learner:'Farheen Banu',trainer:'Jagriti',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2004,time:'11:00',learner:'Ishu Bharti_September25_skillinabox_fashion',trainer:'Bharti',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2005,time:'11:30',learner:'Vishkha Sharma',trainer:'',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2006,time:'11:30',learner:'Maryam Naqvi',trainer:'',coTrainer:'',type:'Regular',note:'shift this class',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2007,time:'12:00',learner:'Meenakshi_June25_Skillinabox',trainer:'',coTrainer:'',type:'Regular',note:'Reschedule',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2008,time:'12:00',learner:'Nistha jindal',trainer:'Jagriti',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2009,time:'12:00',learner:'Anchal Mishra',trainer:'Priya',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2010,time:'1:00',learner:'Afreen oct 25',trainer:'Priya',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2011,time:'1:30',learner:'Tammana Gupta',trainer:'Bharti',coTrainer:'',type:'Regular',note:'NC',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2012,time:'2:45',learner:'Supriya_July25_Skillinabox_',trainer:'Jagriti',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2013,time:'3:00',learner:'Garima_May\'25_SIB',trainer:'Disha',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2014,time:'3:00',learner:'Chandrani Das',trainer:'Riya',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2015,time:'3:00',learner:'Aparna Thakur',trainer:'Ayushi Rai',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2016,time:'3:30',learner:'Rutusha Patel',trainer:'Jagriti',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2017,time:'3:30',learner:'Meenakshi_June25_Skillinabox',trainer:'Sneha',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2018,time:'4:00',learner:'MOOD BOARD/CANVA MEETING',trainer:'Ruchi',coTrainer:'',type:'Mood Board',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2019,time:'4:00',learner:'Aparna_July25_Skillinabox',trainer:'Jagriti',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2020,time:'4:00',learner:'Sarmistha_june25_skillinabox',trainer:'',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2021,time:'4:30',learner:'Maryam Naqvi',trainer:'Priya',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2022,time:'4:30',learner:'Alshifa_Apr25',trainer:'',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2023,time:'4:30',learner:'Amrita Sharma',trainer:'Akansha',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2024,time:'5:00',learner:'Basic intro',trainer:'',coTrainer:'',type:'Intro Session',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2025,time:'5:00',learner:'divyanshi aug',trainer:'Jagriti',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2026,time:'5:00',learner:'Laxmi Thapa',trainer:'Ayushi Rai',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2027,time:'5:30',learner:'Roshni Roshni',trainer:'Jagriti',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2028,time:'5:30',learner:'Purvi Upadhaya_(August 25)_Skillinabox_Fashion',trainer:'',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2029,time:'5:30',learner:'Bhawna verma',trainer:'Akansha',coTrainer:'',type:'Regular',note:'Reschedule at 5:30',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2030,time:'6:00',learner:'Yashika Patil - PORT-EX-20TH Jan26',trainer:'Priya',coTrainer:'',type:'Garment Review',note:'Garment Review - check the group',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2031,time:'6:00',learner:'Nigar_(Sep_25)/OctFashion_Skillinabox(LMS- 1/10/26)',trainer:'',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2032,time:'6:00',learner:'Nusrat_Skillinabox(Sep25)_FD',trainer:'Ayushi Rai',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2033,time:'6:30',learner:'MANISHA OCT 25',trainer:'',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2034,time:'6:30',learner:'Vandana oct',trainer:'',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2035,time:'7:00',learner:'Intro session akansha',trainer:'Priya',coTrainer:'',type:'Intro Session',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2036,time:'7:00',learner:'Gulafsha na',trainer:'Disha',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2037,time:'7:00',learner:'Astha Jain',trainer:'Bharti',coTrainer:'',type:'Regular',note:'machine related',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'}
+  ];
+  const ATT = {
+  2001: {att:'RS',note:''},
+  2002: {att:'P',note:''},
+  2003: {att:'P',note:''},
+  2004: {att:'A',note:''},
+  2007: {att:'RS',note:''},
+  2008: {att:'P',note:''},
+  2010: {att:'P',note:''},
+  2011: {att:'NC',note:''},
+  2012: {att:'P',note:''},
+  2013: {att:'P',note:''},
+  2014: {att:'P',note:''},
+  2015: {att:'P',note:''},
+  2016: {att:'P',note:''},
+  2017: {att:'P',note:''},
+  2019: {att:'P',note:''},
+  2021: {att:'P',note:''},
+  2023: {att:'P',note:''},
+  2025: {att:'P',note:''},
+  2026: {att:'A',note:''},
+  2027: {att:'P',note:''},
+  2029: {att:'RS',note:''}
+  };
+
+  // Called after Firebase loads — patches in the March 16 data if Firebase
+  // doesn't already have it (avoids overwriting if user already re-entered data)
+  window._seedMarch16 = function(){
+    // Only seed if March 16 Monday has fewer than 10 slots
+    const existing = (scheduleByWeek[WK] && scheduleByWeek[WK]['Monday']) || [];
+    if(existing.length >= 10){
+      console.log('March 16 already has', existing.length, 'slots — skipping seed');
+      return;
+    }
+    console.log('Seeding March 16 data…');
+    if(!scheduleByWeek[WK]) scheduleByWeek[WK] = {Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
+    scheduleByWeek[WK]['Monday'] = SLOTS;
+    // Set attendance
+    if(!allWeekData[WK]) allWeekData[WK] = {attData:{},msgDoneData:{},msgSlots:{Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]},tasks:{training:[],operations:[],marketing:[],admin:[],other:[]},tracker:[]};
+    if(!allWeekData[WK].attData) allWeekData[WK].attData = {};
+    Object.keys(ATT).forEach(id=>{ allWeekData[WK].attData[id] = {att:ATT[id], note:''}; });
+    // Update slotId counter to avoid collisions
+    if(slotId < 2037) slotId = 2037;
+    // Save to Firebase
+    if(db && fbConnected){
+      schedule = scheduleByWeek[currentWeekKey];
+      fbSave();
+      console.log('✅ March 16 seeded and saved to Firebase');
+    }
+  };
+})();
+
 function seedDefaultMsgSlots(){ return false; }
 
 // ── DIAGNOSTIC: shows what data is actually loaded ────────────────────────
@@ -4333,6 +4427,10 @@ function connectDatabase(){
       document.querySelectorAll('#tab-messages .day-btn').forEach((b,i)=>b.classList.toggle('active',DAYS[i]===currentDay));
 
 
+      // Seed March 16 data if not already in Firebase
+      if(typeof window._seedMarch16 === 'function') window._seedMarch16();
+      // Re-point schedule after potential seed
+      schedule = scheduleByWeek[currentWeekKey];
       renderAll();
       fbListen();
       // Show app now that data is ready
