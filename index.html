@@ -444,9 +444,6 @@ tr:hover td{background:rgba(41,171,226,0.03);}
 /* Bottom nav: hidden on desktop */
 #mobile-bottom-nav { display: none; }
 #mob-more-menu { display: none; }
-/* slot-row-controls: invisible wrapper on desktop so grid still works */
-.slot-row-controls { display: contents; }
-
 @media (max-width: 768px) {
 
   /* Layout */
@@ -519,19 +516,27 @@ tr:hover td{background:rgba(41,171,226,0.03);}
   .slot-row > div:nth-child(3) { margin: 0 !important; }
   /* Hide co-trainer on mobile */
   .slot-row > select[title="Co-Trainer (optional)"] { display: none !important; }
-  /* Controls row: att + type + comment + del */
-  .slot-row-controls {
-    display: flex !important;
-    flex-direction: row !important;
-    gap: 0.3rem;
-    align-items: center;
-    width: 100%;
-    margin: 0 !important;
+  /* Controls: att + type + comment + del — flex row on mobile */
+  .slot-row .att-sel,
+  .slot-row .sel:last-of-type,
+  .slot-row .comment-btn,
+  .slot-row .del-btn {
+    flex-shrink: 0;
   }
-  .slot-row-controls .att-sel { flex: 1.2; min-width: 0; font-size: 0.72rem; padding: 0.28rem 0.32rem; }
-  .slot-row-controls .sel { flex: 1.5; min-width: 0; font-size: 0.7rem; padding: 0.28rem 0.3rem; }
-  .slot-row-controls .comment-btn { flex-shrink: 0; padding: 0.22rem 0.45rem; font-size: 0.68rem; }
-  .slot-row-controls .del-btn { flex-shrink: 0; padding: 0.28rem 0.45rem; font-size: 0.7rem; }
+  /* Group the last 4 items into a flex row using CSS alone */
+  .slot-row {
+    display: flex !important;
+    flex-wrap: wrap;
+  }
+  .slot-row > .slot-time { order: 0; position: absolute; top: 0.65rem; right: 0.7rem; }
+  .slot-row > div:nth-child(2) { order: 1; width: 100%; padding-right: 78px; }
+  .slot-row > div:nth-child(3) { order: 2; width: 100%; }
+  .slot-row > select[title="Co-Trainer (optional)"] { display: none !important; }
+  .slot-row > .att-sel { order: 3; flex: 1.2; min-width: 0; font-size: 0.72rem; padding: 0.28rem 0.32rem; margin: 0; }
+  .slot-row > select:last-of-type { order: 4; flex: 1.5; min-width: 0; font-size: 0.7rem; padding: 0.28rem 0.3rem; margin: 0; }
+  .slot-row > .comment-btn { order: 5; flex-shrink: 0; padding: 0.22rem 0.45rem; font-size: 0.68rem; }
+  .slot-row > .del-btn { order: 6; flex-shrink: 0; padding: 0.28rem 0.45rem; font-size: 0.7rem; justify-self: unset !important; }
+  .slot-row > .slot-comments { order: 7; width: 100%; }
   /* Comment panel */
   .slot-comments { margin: 0 !important; }
   /* Add slot bar */
@@ -1929,7 +1934,6 @@ function renderSchedule(){
             '<option value="">+ Co-trainer</option>'+
             trainers.map(tr=>'<option'+(s.coTrainer===tr?' selected':'')+'>'+x(tr)+'</option>').join('')+
           '</select>'+
-          '<div class="slot-row-controls">'+
           '<select class="'+attCls+'" onchange="upAtt('+s.id+',this)">'+
             '<option value=""'+(wd.att===''?' selected':'')+'></option>'+
             '<option value="P"'+(wd.att==='P'?' selected':'')+'>P  Present</option>'+
@@ -1943,8 +1947,7 @@ function renderSchedule(){
           // Comment button — own column
           '<button class="comment-btn'+(notes.length?' has-comments':'')+'" onclick="toggleComments('+s.id+',event)">💬'+(notes.length?' '+notes.length:'')+'</button>'+
           // Remove button — own column
-          '<button class="del-btn" onclick="delSlot('+s.id+')">✕</button>'+
-          '</div>'+
+          '<button class="del-btn" onclick="delSlot('+s.id+')" style="justify-self:center;">✕</button>'+
           // Comment panel spans all columns
           '<div class="slot-comments" id="sc-'+s.id+'">'+
             '<div class="comment-history" id="ch-'+s.id+'">'+renderCommentHistory(s.id)+'</div>'+
