@@ -1424,9 +1424,10 @@ function showSaveErrorBanner(err){
   const banner = document.createElement('div');
   banner.id = 'save-error-banner';
   banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#b91c1c;color:white;padding:0.7rem 1rem;font-size:0.8rem;font-family:-apple-system,sans-serif;display:flex;align-items:center;gap:0.6rem;box-shadow:0 4px 20px rgba(0,0,0,0.5);';
+  const dismissBtn = '<button onclick="document.getElementById(\'save-error-banner\').remove()" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:0.3rem 0.6rem;border-radius:4px;cursor:pointer;">✕</button>';
   banner.innerHTML = isPermission
-    ? '<span style="font-size:1.1rem">🔒</span><div style="flex:1"><strong>Firebase rules expired — data NOT being saved!</strong><br><span style="opacity:0.9;font-size:0.74rem;">Go to Firebase Console → Realtime Database → Rules → set auth!=null rules → Publish</span></div><button onclick="document.getElementById('save-error-banner').remove()" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:0.3rem 0.6rem;border-radius:4px;cursor:pointer;">✕</button>'
-    : '<span style="font-size:1.1rem">⚠️</span><div style="flex:1"><strong>Save failed — check connection</strong><br><span style="opacity:0.9;font-size:0.74rem;">'+(err&&err.message||'Unknown error')+'</span></div><button onclick="document.getElementById('save-error-banner').remove()" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:0.3rem 0.6rem;border-radius:4px;cursor:pointer;">✕</button>';
+    ? '<span style="font-size:1.1rem">🔒</span><div style="flex:1"><strong>Firebase rules expired — data NOT being saved!</strong><br><span style="opacity:0.9;font-size:0.74rem;">Go to Firebase Console → Realtime Database → Rules → set auth!=null rules → Publish</span></div>' + dismissBtn
+    : '<span style="font-size:1.1rem">⚠️</span><div style="flex:1"><strong>Save failed — check connection</strong><br><span style="opacity:0.9;font-size:0.74rem;">'+(err&&err.message||'Unknown error')+'</span></div>' + dismissBtn;
   document.body.prepend(banner);
 }
 function hideSaveErrorBanner(){
