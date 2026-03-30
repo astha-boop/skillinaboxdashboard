@@ -93,6 +93,7 @@ h1{font-family:'Arial Black','Impact','Trebuchet MS',sans-serif;font-size:2.3rem
 .slot-row:hover{background:rgba(41,171,226,0.04);}
 .slot-row.row-active{background:rgba(242,101,34,0.04);}
 .slot-row.row-rs{background:rgba(167,139,250,0.06);border-left:3px solid var(--purple);}
+.slot-row.row-changed{background:rgba(255,20,147,0.15);border-left:4px solid #ff1493;box-shadow:0 0 10px rgba(255,20,147,0.3);}
 .slot-time{font-size:0.77rem;font-weight:600;display:flex;flex-direction:column;gap:0.2rem;}
 .time-sel{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:5px;padding:0.22rem 0.3rem;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:0.76rem;font-weight:700;color:var(--text);outline:none;cursor:pointer;}
 .time-sel:focus,.time-sel:hover{border-color:var(--sib-blue);}
@@ -435,172 +436,6 @@ tr:hover td{background:rgba(41,171,226,0.03);}
 #user-badge .user-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#29ABE2,#F26522);display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#fff;flex-shrink:0;}
 #logout-btn{background:none;border:1px solid rgba(239,68,68,0.3);border-radius:5px;color:#ef4444;font-size:0.65rem;padding:0.18rem 0.5rem;cursor:pointer;transition:all 0.15s;font-family:inherit;}
 #logout-btn:hover{background:rgba(239,68,68,0.1);}
-
-/* ═══════════════════════════════════════════════════
-   MOBILE — max-width 768px (phones & small tablets)
-   Desktop styles above are completely untouched.
-   ═══════════════════════════════════════════════════ */
-
-/* Bottom nav: hidden on desktop */
-#mobile-bottom-nav { display: none; }
-#mob-more-menu { display: none; }
-@media (max-width: 768px) {
-
-  /* Layout */
-  .app { flex-direction: column; }
-  .sidebar { display: none !important; }
-  .main { padding: 0.75rem 0.65rem 5.5rem; }
-
-  /* Top bar */
-  .dept-tag { display: none; }
-  h1 { font-size: 1.35rem; }
-  .top-bar { flex-direction: column; gap: 0.5rem; margin-bottom: 0.8rem; }
-  .top-actions { flex-wrap: wrap; gap: 0.3rem; }
-  .top-actions .btn { font-size: 0.68rem; padding: 0.35rem 0.55rem; }
-
-  /* Tabs */
-  .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding: 0 0.2rem; }
-  .tabs::-webkit-scrollbar { display: none; }
-  .tab-btn { font-size: 0.7rem; padding: 0.48rem 0.65rem; }
-
-  /* Stats */
-  .stats-row { grid-template-columns: repeat(3, 1fr); gap: 0.35rem; }
-  .stat-card { padding: 0.55rem 0.6rem; }
-  .stat-lbl { font-size: 0.5rem; }
-  .stat-val { font-size: 1.25rem; }
-
-  /* Day row */
-  .day-row { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 2px; gap: 0.28rem; }
-  .day-row::-webkit-scrollbar { display: none; }
-  .day-btn { flex-shrink: 0; padding: 0.3rem 0.5rem; font-size: 0.68rem; }
-  .date-inp { font-size: 0.68rem; padding: 0.3rem 0.42rem; }
-  #week-indicator { font-size: 0.6rem; padding: 0.2rem 0.4rem; }
-  button[onclick*="shiftWeek"] { padding: 0.26rem 0.42rem; font-size: 0.68rem; }
-  button[onclick="copyFromLastWeek()"] { font-size: 0.64rem; padding: 0.24rem 0.45rem; }
-
-  /* Schedule table → card view */
-  .sched-head { display: none; }
-  .slot-row {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 0.4rem !important;
-    padding: 0.75rem 0.7rem !important;
-    position: relative;
-    grid-template-columns: unset !important;
-  }
-  /* Time: absolute top-right */
-  .slot-time {
-    position: absolute !important;
-    top: 0.65rem !important;
-    right: 0.7rem !important;
-    width: auto !important;
-    margin: 0 !important;
-    display: flex !important;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 0.12rem;
-  }
-  .time-sel {
-    width: 68px !important;
-    font-size: 0.7rem !important;
-    padding: 0.14rem 0.22rem !important;
-    font-weight: 700;
-    color: var(--sib-blue) !important;
-    background: transparent !important;
-    border: 1px solid rgba(41,171,226,0.35) !important;
-  }
-  /* Learner input */
-  .slot-row > div:nth-child(2) { padding-right: 78px; margin: 0 !important; }
-  .slot-row > div:nth-child(2) .si { font-size: 0.8rem; padding: 0.32rem 0.45rem; }
-  /* Trainer div */
-  .slot-row > div:nth-child(3) { margin: 0 !important; }
-  /* Hide co-trainer on mobile */
-  .slot-row > select[title="Co-Trainer (optional)"] { display: none !important; }
-  /* Controls: att + type + comment + del — flex row on mobile */
-  .slot-row .att-sel,
-  .slot-row .sel:last-of-type,
-  .slot-row .comment-btn,
-  .slot-row .del-btn {
-    flex-shrink: 0;
-  }
-  /* Group the last 4 items into a flex row using CSS alone */
-  .slot-row {
-    display: flex !important;
-    flex-wrap: wrap;
-  }
-  .slot-row > .slot-time { order: 0; position: absolute; top: 0.65rem; right: 0.7rem; }
-  .slot-row > div:nth-child(2) { order: 1; width: 100%; padding-right: 78px; }
-  .slot-row > div:nth-child(3) { order: 2; width: 100%; }
-  .slot-row > select[title="Co-Trainer (optional)"] { display: none !important; }
-  .slot-row > .att-sel { order: 3; flex: 1.2; min-width: 0; font-size: 0.72rem; padding: 0.28rem 0.32rem; margin: 0; }
-  .slot-row > select:last-of-type { order: 4; flex: 1.5; min-width: 0; font-size: 0.7rem; padding: 0.28rem 0.3rem; margin: 0; }
-  .slot-row > .comment-btn { order: 5; flex-shrink: 0; padding: 0.22rem 0.45rem; font-size: 0.68rem; }
-  .slot-row > .del-btn { order: 6; flex-shrink: 0; padding: 0.28rem 0.45rem; font-size: 0.7rem; justify-self: unset !important; }
-  .slot-row > .slot-comments { order: 7; width: 100%; }
-  /* Comment panel */
-  .slot-comments { margin: 0 !important; }
-  /* Add slot bar */
-  .add-row-bar { flex-wrap: wrap; padding: 0.55rem 0.65rem; gap: 0.35rem; }
-
-  /* Tracker */
-  .tr-head { display: none; }
-  .tr-row { display: flex; flex-direction: column; gap: 0.35rem; padding: 0.7rem; border-bottom: 1px solid var(--s2); }
-  .tr-row > * { width: 100% !important; }
-  .dc-box { height: 26px; font-size: 0.8rem; }
-
-  /* Trainer cards */
-  .trainer-grid { grid-template-columns: 1fr 1fr; gap: 0.45rem; }
-  .tr-card { padding: 0.7rem; }
-
-  /* Message slots */
-  .msg-row { flex-direction: column; gap: 0.38rem; padding: 0.6rem 0.7rem; }
-  .msg-stats { grid-template-columns: repeat(2,1fr); }
-
-  /* Task manager */
-  .task-col-head { display: none; }
-  .task-row { flex-direction: column; gap: 0.3rem; padding: 0.6rem 0.7rem; }
-  .task-row > * { width: 100% !important; }
-
-  /* Modals */
-  .modal { width: 96vw !important; max-height: 88vh; overflow-y: auto; }
-  .qamodal { width: 96vw !important; }
-  .modal .grid4 { grid-template-columns: 1fr 1fr; }
-
-  /* Bottom nav */
-  #mobile-bottom-nav {
-    display: flex !important;
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    background: #0D1B3E;
-    border-top: 1px solid #1e3a6e;
-    z-index: 1000;
-    height: 56px;
-    align-items: stretch;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.4);
-  }
-  .mob-nav-btn {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    background: none;
-    border: none;
-    color: #5a7ab0;
-    font-size: 0.5rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    cursor: pointer;
-    padding: 0.25rem 0.1rem;
-    font-family: -apple-system, sans-serif;
-    transition: color 0.15s;
-  }
-  .mob-nav-btn .mob-icon { font-size: 1.15rem; line-height: 1; }
-  .mob-nav-btn.active { color: #F26522; }
-}
-
 </style>
 </head>
 <body>
@@ -757,6 +592,7 @@ tr:hover td{background:rgba(41,171,226,0.03);}
       <div id="sync-status-inline" style="font-size:0.68rem;color:#9EA3A8;display:flex;align-items:center;gap:0.35rem;">
         <span id="sync-dot" style="width:7px;height:7px;border-radius:50%;background:#22c55e;flex-shrink:0;display:inline-block;"></span>
         <span id="sync-text">Connecting…</span>
+        <button id="fb-fix-btn" onclick="document.getElementById('rules-fix-modal').style.display='flex'" title="Fix Firebase rules" style="display:none;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);border-radius:5px;color:#ef4444;font-size:0.65rem;padding:0.15rem 0.45rem;cursor:pointer;font-family:inherit;font-weight:600;">🔧 Fix</button>
       </div>
       <div style="position:relative;">
         <button id="notif-bell" onclick="toggleNotifPanel()" title="Notifications">🔔<span id="notif-count"></span></button>
@@ -790,6 +626,7 @@ tr:hover td{background:rgba(41,171,226,0.03);}
         </div>
       </div>
       <button class="btn" onclick="exportCSV()">⬇ Export</button>
+      <button class="btn" onclick="showDiagnostic()" title="Show what data is loaded from Firebase">🔍 Debug</button>
       <button class="btn btn-primary" onclick="flashSave()">✓ Save All</button>
     </div>
   </div>
@@ -912,11 +749,10 @@ tr:hover td{background:rgba(41,171,226,0.03);}
       <button class="day-btn" onclick="pickDay('Saturday',this)">Sat</button>
       <button class="day-btn" onclick="pickDay('Sunday',this)">Sun</button>
       <input type="date" class="date-inp" id="sched-date" onchange="dateChanged(this.value)">
-      <button onclick="shiftWeek(-1)" style="background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:0.3rem 0.6rem;color:var(--muted);cursor:pointer;font-size:0.76rem;transition:all 0.15s;font-family:inherit;" onmouseover="this.style.borderColor='var(--sib-blue)'" onmouseout="this.style.borderColor='var(--border)'">◀ Prev</button>
-      <span id="week-indicator" style="font-size:0.7rem;color:var(--sib-blue);background:rgba(41,171,226,0.1);border:1px solid rgba(41,171,226,0.25);border-radius:6px;padding:0.28rem 0.65rem;white-space:nowrap;"></span>
-      <button onclick="shiftWeek(1)" style="background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:0.3rem 0.6rem;color:var(--muted);cursor:pointer;font-size:0.76rem;transition:all 0.15s;font-family:inherit;" onmouseover="this.style.borderColor='var(--sib-blue)'" onmouseout="this.style.borderColor='var(--border)'">Next ▶</button>
-      <button onclick="copyFromLastWeek()" style="background:rgba(247,195,37,0.12);border:1px solid rgba(247,195,37,0.3);border-radius:6px;padding:0.28rem 0.7rem;color:#F7C325;cursor:pointer;font-size:0.72rem;font-family:inherit;">📋 Copy from prev week</button>
+      <button onclick="shiftWeek(-1)" title="Previous week" style="background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:0.28rem 0.6rem;color:var(--muted);cursor:pointer;font-size:0.8rem;transition:all 0.18s;margin-left:0.3rem;" onmouseover="this.style.borderColor='var(--sib-blue)'" onmouseout="this.style.borderColor='var(--border)'">◀ Prev</button>
+      <button onclick="copyFromLastWeek()" title="Copy all slots from previous week into this week" style="background:rgba(247,195,37,0.12);border:1px solid rgba(247,195,37,0.3);border-radius:6px;padding:0.28rem 0.7rem;color:#F7C325;cursor:pointer;font-size:0.73rem;transition:all 0.18s;font-family:inherit;" onmouseover="this.style.background='rgba(247,195,37,0.22)'" onmouseout="this.style.background='rgba(247,195,37,0.12)'">📋 Copy from prev week</button>
       <span id="week-indicator" style="font-size:0.7rem;color:var(--sib-blue);background:rgba(41,171,226,0.1);border:1px solid rgba(41,171,226,0.25);border-radius:6px;padding:0.28rem 0.65rem;white-space:nowrap;margin-left:0.3rem"></span>
+      <button onclick="shiftWeek(1)" title="Next week" style="background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:0.28rem 0.6rem;color:var(--muted);cursor:pointer;font-size:0.8rem;transition:all 0.18s;" onmouseover="this.style.borderColor='var(--sib-blue)'" onmouseout="this.style.borderColor='var(--border)'">Next ▶</button>
       <!-- View toggle -->
       <div style="display:flex;gap:0.3rem;margin-left:0.5rem;border:1px solid var(--border);border-radius:7px;padding:2px;background:var(--s1);">
         <button id="view-list-btn" onclick="setSchedView('list')" style="background:var(--sib-blue);color:white;border:none;border-radius:5px;padding:0.28rem 0.7rem;font-size:0.72rem;cursor:pointer;font-family:inherit;font-weight:600;transition:all 0.18s;">☰ List</button>
@@ -1418,29 +1254,15 @@ let db = null;
 let fbConnected = false;
 const LS_CONFIG_KEY = 'sib_firebase_config';
 
-function showSaveErrorBanner(err){
-  if(document.getElementById('save-error-banner')) return;
-  const isPermission = err && (err.code==='PERMISSION_DENIED'||(err.message||'').toLowerCase().includes('permission'));
-  const banner = document.createElement('div');
-  banner.id = 'save-error-banner';
-  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#b91c1c;color:white;padding:0.7rem 1rem;font-size:0.8rem;font-family:-apple-system,sans-serif;display:flex;align-items:center;gap:0.6rem;box-shadow:0 4px 20px rgba(0,0,0,0.5);';
-  const dismissBtn = '<button onclick="document.getElementById(\'save-error-banner\').remove()" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:0.3rem 0.6rem;border-radius:4px;cursor:pointer;">✕</button>';
-  banner.innerHTML = isPermission
-    ? '<span style="font-size:1.1rem">🔒</span><div style="flex:1"><strong>Firebase rules expired — data NOT being saved!</strong><br><span style="opacity:0.9;font-size:0.74rem;">Go to Firebase Console → Realtime Database → Rules → set auth!=null rules → Publish</span></div>' + dismissBtn
-    : '<span style="font-size:1.1rem">⚠️</span><div style="flex:1"><strong>Save failed — check connection</strong><br><span style="opacity:0.9;font-size:0.74rem;">'+(err&&err.message||'Unknown error')+'</span></div>' + dismissBtn;
-  document.body.prepend(banner);
-}
-function hideSaveErrorBanner(){
-  const b=document.getElementById('save-error-banner'); if(b) b.remove();
-}
-
 function setSyncStatus(state, text){
   const bar = document.getElementById('sync-bar');
   const dot = document.getElementById('sync-dot');
   const txt = document.getElementById('sync-text');
+  const fixBtn = document.getElementById('fb-fix-btn');
   if(bar){ bar.className = state; }
-  if(dot){ dot.className = state === 'saved' ? '' : state; }
-  if(txt){ txt.textContent = text; }
+  if(dot){ dot.className = state === 'saved' ? '' : state; dot.style.background = state==='error'?'#ef4444':state==='syncing'?'#F7C325':'#22c55e'; }
+  if(txt){ txt.textContent = text; txt.style.color = state==='error'?'#ef4444':state==='syncing'?'#F7C325':'#9EA3A8'; }
+  if(fixBtn){ fixBtn.style.display = state==='error' ? 'inline-block' : 'none'; }
 }
 
 // ── FIREBASE SYNC ─────────────────────────────────────────────────────────
@@ -1478,6 +1300,7 @@ function _buildPayload(){
   };
 }
 
+let _saveErrorShown = false;
 function _doWrite(){
   if(!db || !fbConnected) return;
   _pendingWriteCount++;          // mark: we have an in-flight write
@@ -1485,15 +1308,50 @@ function _doWrite(){
   db.ref('skillinabox/data').set(payload)
     .then(()=>{
       _pendingWriteCount = Math.max(0, _pendingWriteCount-1);
+      _saveErrorShown = false;
+      hideSaveErrorBanner();
       setSyncStatus('saved','All changes saved ✓');
       setTimeout(()=>setSyncStatus('saved','Live sync on'), 1500);
     })
     .catch(e=>{
       _pendingWriteCount = Math.max(0, _pendingWriteCount-1);
-      setSyncStatus('error','⚠️ Save failed!');
-      console.error(e);
-      showSaveErrorBanner(e);
+      setSyncStatus('error','⚠️ Save failed — data NOT being saved!');
+      console.error('Firebase save error:', e);
+      // Show a prominent banner so the user knows their data is at risk
+      if(!_saveErrorShown){
+        _saveErrorShown = true;
+        showSaveErrorBanner(e);
+      }
     });
+}
+
+function showSaveErrorBanner(err){
+  let existing = document.getElementById('save-error-banner');
+  if(existing) existing.remove();
+  const isPermission = err && (err.code === 'PERMISSION_DENIED' || (err.message||'').includes('Permission denied') || (err.message||'').includes('permission'));
+  const banner = document.createElement('div');
+  banner.id = 'save-error-banner';
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#b91c1c;color:white;padding:0.75rem 1.2rem;font-size:0.82rem;font-family:-apple-system,BlinkMacSystemFont,sans-serif;display:flex;align-items:center;gap:0.75rem;box-shadow:0 4px 24px rgba(0,0,0,0.5);';
+  banner.innerHTML = isPermission
+    ? `<span style="font-size:1.2rem">🔒</span>
+       <div style="flex:1">
+         <strong>Firebase rules have expired — your data is NOT being saved!</strong><br>
+         <span style="opacity:0.9;font-size:0.76rem;">Click "Fix Now" for step-by-step instructions (takes 2 minutes).</span>
+       </div>
+       <button onclick="document.getElementById('rules-fix-modal').style.display='flex';document.getElementById('save-error-banner').remove()" style="background:white;color:#b91c1c;border:none;padding:0.3rem 0.85rem;border-radius:5px;cursor:pointer;font-size:0.78rem;font-weight:700;white-space:nowrap;margin-right:4px;">🔧 Fix Now</button>
+       <button onclick="document.getElementById('save-error-banner').remove()" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:0.3rem 0.7rem;border-radius:5px;cursor:pointer;font-size:0.8rem;white-space:nowrap;">Dismiss</button>`
+    : `<span style="font-size:1.2rem">⚠️</span>
+       <div style="flex:1">
+         <strong>Save failed — your data is NOT being saved!</strong><br>
+         <span style="opacity:0.9;font-size:0.76rem;">Error: ${(err&&err.message)||'Unknown error'}. Check your internet connection or Firebase setup.</span>
+       </div>
+       <button onclick="document.getElementById('rules-fix-modal').style.display='flex';document.getElementById('save-error-banner').remove()" style="background:white;color:#b91c1c;border:none;padding:0.3rem 0.85rem;border-radius:5px;cursor:pointer;font-size:0.78rem;font-weight:700;white-space:nowrap;margin-right:4px;">🔧 Fix</button>
+       <button onclick="document.getElementById('save-error-banner').remove()" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:0.3rem 0.7rem;border-radius:5px;cursor:pointer;font-size:0.8rem;white-space:nowrap;">Dismiss</button>`;
+  document.body.prepend(banner);
+}
+function hideSaveErrorBanner(){
+  const b = document.getElementById('save-error-banner');
+  if(b) b.remove();
 }
 
 // Immediate write — used by delSlot so deletion hits Firebase with no debounce
@@ -1504,15 +1362,20 @@ function fbSaveNow(){
 }
 
 let _initialLoadDone = false;
+
 function fbListen(){
   db.ref('skillinabox/data').on('value', snap=>{
+    // Skip our own in-flight writes
     if(_pendingWriteCount > 0) return;
+    // Skip the very first event — that is the same snapshot we just loaded with once()
     if(!_initialLoadDone){ _initialLoadDone = true; return; }
     const data = snap.val();
     if(!data) return;
     applyRemoteData(data);
-    if(!scheduleByWeek[currentWeekKey])
+    // Re-point schedule after remote update
+    if(!scheduleByWeek[currentWeekKey]){
       scheduleByWeek[currentWeekKey]={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
+    }
     schedule = scheduleByWeek[currentWeekKey];
     renderAll();
     if(typeof taskView!=='undefined' && taskView==='calendar') renderTaskCalendar();
@@ -1561,6 +1424,11 @@ function deepMerge(target, source){
 
 function applyRemoteData(data){
   if(!data) return;
+  // ── FIREBASE WINS ──────────────────────────────────────────────────────
+  // When Firebase has data, it is the single source of truth.
+  // We do NOT merge with hardcoded seed data — we replace it.
+  // The hardcoded scheduleByWeek seed is only used on very first load
+  // when Firebase returns nothing.
 
   if(data.trainers && Array.isArray(data.trainers) && data.trainers.length)
     trainers = data.trainers;
@@ -1568,11 +1436,12 @@ function applyRemoteData(data){
   if(data.deletedSlotIds && Array.isArray(data.deletedSlotIds))
     data.deletedSlotIds.forEach(id => deletedSlotIds.add(Number(id)));
 
-  // Firebase is the single source of truth — replace everything
+  // Replace schedule weeks from Firebase completely
   if(data.userWeeks && Object.keys(data.userWeeks).length){
     Object.keys(data.userWeeks).forEach(wk=>{
       const remoteWeek = data.userWeeks[wk];
       if(!remoteWeek) return;
+      // Always overwrite with Firebase data — Firebase is source of truth
       scheduleByWeek[wk] = {};
       DAYS.forEach(day=>{
         scheduleByWeek[wk][day] = (remoteWeek[day]||[]).filter(
@@ -1582,10 +1451,12 @@ function applyRemoteData(data){
     });
   }
 
+  // Replace allWeekData completely from Firebase
   if(data.allWeekData){
     Object.keys(data.allWeekData).forEach(wk=>{
       if(data.allWeekData[wk]) allWeekData[wk] = data.allWeekData[wk];
     });
+    // Ensure every week store has required sub-keys
     Object.keys(allWeekData).forEach(wk=>{
       const s = allWeekData[wk];
       if(!s.attData) s.attData = {};
@@ -1593,15 +1464,17 @@ function applyRemoteData(data){
       if(!s.msgSlots) s.msgSlots = {Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
       if(!s.tasks) s.tasks = {};
       if(!Array.isArray(s.tracker)) s.tracker = [];
-      ['training','operations','marketing','admin','other'].forEach(k=>{
-        if(!Array.isArray(s.tasks[k])) s.tasks[k]=[];
-      });
+      ['training','operations','marketing','admin','other'].forEach(k=>{ if(!Array.isArray(s.tasks[k])) s.tasks[k]=[]; });
     });
   }
 
+  // Replace learnerNotes
   if(data.learnerNotes) learnerNotes = data.learnerNotes;
+
+  // Replace notifications
   if(data.notifications) notifications = data.notifications;
 
+  // Merge editHistory (union — never lose entries)
   if(data.editHistory && Array.isArray(data.editHistory)){
     const existingIds = new Set(editHistory.map(e=>e.id));
     data.editHistory.forEach(e=>{ if(!existingIds.has(e.id)) editHistory.push(e); });
@@ -1617,6 +1490,7 @@ function applyRemoteData(data){
   if(data.extId     && data.extId     > extId)     extId     = data.extId;
   if(data.trashBin  && Array.isArray(data.trashBin)) trashBin = data.trashBin;
 
+  // Ensure current week exists
   if(!scheduleByWeek[currentWeekKey])
     scheduleByWeek[currentWeekKey]={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
   schedule = scheduleByWeek[currentWeekKey];
@@ -1650,6 +1524,7 @@ function connectFirebase(){
             setSyncStatus('saved','Live sync on');
             // No fbSave() on startup — would overwrite Firebase with stale local state
           }
+          // Always apply remote data — never wipe Firebase
           if(existing) applyRemoteData(existing);
           finishLoad();
         });
@@ -1677,6 +1552,7 @@ const STYPES=['Regular','Intro Session','Garment Review','Portfolio Meeting','Ex
 let trainers=['Priya','Riya','Ruchi','Nandini','Disha','Ayushi Rai','Shiuli','Priyanka G','Jagriti','Bharti','Sneha','Sanjana','Akansha'];
 
 // ALL schedule data comes from Firebase — no hardcoded seed.
+// scheduleByWeek is populated entirely by applyRemoteData() on load.
 const scheduleByWeek={};
 let schedule={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
 
@@ -1773,6 +1649,7 @@ function getWeekKey(d){
   const day=dt.getDay();
   const diff=dt.getDate()-(day===0?6:day-1);
   const mon=new Date(dt); mon.setDate(diff);
+  // Use local date parts to avoid UTC timezone shift (critical for IST/UTC+5:30)
   const yyyy=mon.getFullYear();
   const mm=String(mon.getMonth()+1).padStart(2,'0');
   const dd=String(mon.getDate()).padStart(2,'0');
@@ -1854,6 +1731,60 @@ function pickDay(day,btn){
   if(schedView==='calendar') renderCalendar();
   else renderSchedule();
 }
+function copyFromLastWeek(){
+  // Find the previous week key
+  const cur = new Date(currentWeekKey + 'T00:00:00');
+  cur.setDate(cur.getDate() - 7);
+  const prevKey = cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0')+'-'+String(cur.getDate()).padStart(2,'0');
+  const prevWeek = scheduleByWeek[prevKey];
+  if(!prevWeek || DAYS.reduce((n,d)=>n+(prevWeek[d]||[]).length,0)===0){
+    alert('No data found for previous week ('+prevKey+'). Navigate to a week that has data first.');
+    return;
+  }
+  const currentSlots = DAYS.reduce((n,d)=>n+(scheduleByWeek[currentWeekKey][d]||[]).length,0);
+  if(currentSlots > 0){
+    if(!confirm('This week already has '+currentSlots+' slots. Copy from previous week will ADD those slots on top. Continue?')) return;
+  } else {
+    if(!confirm('Copy all slots from week of '+fmtWeekRange(prevKey)+' into this week ('+fmtWeekRange(currentWeekKey)+')? Attendance and comments will NOT be copied — only learner names, trainers, and session types.')) return;
+  }
+  // Copy slots with new IDs, clearing attendance
+  DAYS.forEach(day=>{
+    const src = prevWeek[day] || [];
+    if(!scheduleByWeek[currentWeekKey][day]) scheduleByWeek[currentWeekKey][day] = [];
+    src.forEach(s=>{
+      scheduleByWeek[currentWeekKey][day].push({
+        id: ++slotId,
+        time: s.time,
+        learner: s.learner,
+        trainer: s.trainer || '',
+        coTrainer: s.coTrainer || '',
+        type: s.type || 'Regular',
+        note: s.note || '',
+        addedBy: currentUser ? currentUser.email.split('@')[0] : 'copy',
+        addedAt: new Date().toISOString(),
+      });
+    });
+  });
+  schedule = scheduleByWeek[currentWeekKey];
+  logEdit('Schedule','Copied from previous week','Copied slots from '+prevKey+' → '+currentWeekKey);
+  fbSave();
+  renderAll();
+  setSyncStatus('syncing','Copied & saving…');
+}
+
+function shiftWeek(delta){
+  const cur = new Date(currentWeekKey + 'T00:00:00');
+  cur.setDate(cur.getDate() + delta * 7);
+  // Use local date to avoid UTC offset issues (e.g. IST = UTC+5:30)
+  const yyyy=cur.getFullYear();
+  const mm=String(cur.getMonth()+1).padStart(2,'0');
+  const dd=String(cur.getDate()).padStart(2,'0');
+  const newDateStr = yyyy+'-'+mm+'-'+dd;
+  const inp = document.getElementById('sched-date');
+  if(inp) inp.value = newDateStr;
+  dateChanged(newDateStr);
+}
+
 function dateChanged(val){
   if(!val)return;
   const dn=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -1866,7 +1797,6 @@ function dateChanged(val){
     scheduleByWeek[currentWeekKey]={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
   }
   schedule=scheduleByWeek[currentWeekKey];
-  try{ localStorage.setItem('sib_lastWeek', currentWeekKey); }catch(e){}
   // Update week indicator
   const wi=document.getElementById('week-indicator');
   if(wi) wi.textContent='Week of '+fmtWeekRange(currentWeekKey);
@@ -1903,13 +1833,14 @@ function renderSchedule(){
         const wd=getSlotWeekData(s.id); // week-specific att+note
         const notes=learnerNotes[s.id]||[];
         const isRS=wd.att==='RS';
-        const rowCls='slot-row'+(isRS?' row-rs':s.learner?' row-active':'');
+        const isChanged=s.trainer==='Changed';
+        const rowCls='slot-row'+(isRS?' row-rs':isChanged?' row-changed':s.learner?' row-active':'');
         const attCls='att-sel att-'+(wd.att||'blank');
         const msgConflict = s.trainer ? getMsgSlotConflict(s.trainer, currentDay, s.time) : null;
         rows+='<div class="'+rowCls+'" id="r'+s.id+'">'+
           '<div class="slot-time">'+
             (si===0?
-              '<select class="time-sel" onchange="upSlotTime('+s.id+',this.value)">'+
+              '<select class="time-sel" onchange="upSlotTime('+s.id+',this.value)" title="Change time">'+
                 FIXED_TIMES.map(ft=>'<option value="'+ft+'"'+(s.time===ft?' selected':'')+'>'+ft+'</option>').join('')+
                 (FIXED_TIMES.includes(s.time)?'':'<option value="'+x(s.time)+'" selected>'+x(s.time)+'</option>')+
               '</select>'
@@ -1923,6 +1854,7 @@ function renderSchedule(){
           '<div style="display:flex;flex-direction:column;gap:3px">'+
             '<select class="sel'+(msgConflict?' sel-conflict':'')+'" onchange="upSlot('+s.id+",'trainer'"+ ',this.value)" title="'+(msgConflict?'⚠️ '+x(s.trainer)+' is assigned to message slot ('+x(msgConflict.from)+'–'+x(msgConflict.to)+') at this time':'')+'">'+
               '<option value=""> Trainer </option>'+
+              '<option value="Changed"'+(s.trainer==='Changed'?' selected':'')+' style="color:#ff1493;font-weight:600">Changed</option>'+
               trainers.map(tr=>{
                 const conflict = getMsgSlotConflict(tr, currentDay, s.time);
                 return '<option'+(s.trainer===tr?' selected':'')+(conflict?' style="color:#F7C325"':'')+'>'+x(tr)+(conflict?' ⚠️ msg slot':'')+' </option>';
@@ -1969,13 +1901,11 @@ function renderSchedule(){
 }
 
 function upSlotTime(id, newTime){
+  // Find the slot across all days (it may be on any day in the current week)
   let found = null;
-  for(const wk of Object.keys(scheduleByWeek)){
-    for(const d of DAYS){
-      const s=(scheduleByWeek[wk][d]||[]).find(x=>x.id===id);
-      if(s){ found=s; break; }
-    }
-    if(found) break;
+  for(const d of DAYS){
+    const s=(scheduleByWeek[currentWeekKey][d]||[]).find(x=>x.id===id);
+    if(s){ found=s; break; }
   }
   if(!found) return;
   const oldTime = found.time;
@@ -1983,49 +1913,8 @@ function upSlotTime(id, newTime){
   found.time = newTime;
   logEdit('Schedule','Changed time',`${found.learner||'slot'} · ${currentDay} · "${oldTime}" → "${newTime}"`);
   fbSave();
+  // Re-render so rows re-sort by new time
   renderSchedule();
-}
-
-function shiftWeek(delta){
-  const cur = new Date(currentWeekKey + 'T00:00:00');
-  cur.setDate(cur.getDate() + delta * 7);
-  const newDateStr = cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0')+'-'+String(cur.getDate()).padStart(2,'0');
-  const inp = document.getElementById('sched-date');
-  if(inp) inp.value = newDateStr;
-  dateChanged(newDateStr);
-}
-
-function copyFromLastWeek(){
-  const cur = new Date(currentWeekKey + 'T00:00:00');
-  cur.setDate(cur.getDate() - 7);
-  const prevKey = cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0')+'-'+String(cur.getDate()).padStart(2,'0');
-  const prevWeek = scheduleByWeek[prevKey];
-  if(!prevWeek || DAYS.reduce((n,d)=>n+(prevWeek[d]||[]).length,0)===0){
-    alert('No data found for previous week ('+prevKey+'). Use Prev button to navigate to a week that has data.');
-    return;
-  }
-  const currentSlots = DAYS.reduce((n,d)=>n+(scheduleByWeek[currentWeekKey][d]||[]).length,0);
-  const msg = currentSlots > 0
-    ? 'This week already has '+currentSlots+' slots. Copy from previous week will ADD those slots on top. Continue?'
-    : 'Copy all slots from week of '+fmtWeekRange(prevKey)+' into this week ('+fmtWeekRange(currentWeekKey)+')? Attendance will NOT be copied.';
-  if(!confirm(msg)) return;
-  DAYS.forEach(day=>{
-    const src = prevWeek[day] || [];
-    if(!scheduleByWeek[currentWeekKey][day]) scheduleByWeek[currentWeekKey][day] = [];
-    src.forEach(s=>{
-      scheduleByWeek[currentWeekKey][day].push({
-        id: ++slotId, time: s.time, learner: s.learner,
-        trainer: s.trainer||'', coTrainer: s.coTrainer||'',
-        type: s.type||'Regular', note: s.note||'',
-        addedBy: currentUser?currentUser.email.split('@')[0]:'copy',
-        addedAt: new Date().toISOString(),
-      });
-    });
-  });
-  schedule = scheduleByWeek[currentWeekKey];
-  logEdit('Schedule','Copied from previous week','Copied slots from '+prevKey+' to '+currentWeekKey);
-  fbSave();
-  renderAll();
 }
 
 function upSlot(id,f,v){
@@ -2355,11 +2244,15 @@ function learnersMatch(schedName, trackerName){
   const wb = b.split(' ').filter(Boolean);
   const fa = wa[0]||'', fb = wb[0]||'';
   const sa = wa[1]||'', sb = wb[1]||'';
+  // Require BOTH first AND second word to match
+  // "Astha Jain" ≠ "Astha Rana", "Parul Pal" == "Parul Pal_May25_SIB"
   if(fa===fb && fa.length>=3){
-    if(sa && sb && sa===sb) return true;
-    if(!sa && !sb) return true;
-    if(!sa && wb.length>=1) return false;
-    if(!sb && wa.length>=1) return false;
+    if(sa && sb && sa===sb) return true; // both words match
+    if(!sa && !sb) return true;          // both single-word names, same word
+    // One has a last name and other doesn't — only match if one clearly starts with the other
+    // e.g. "astha" matches "astha jain" ONLY if the schedule name has no last name
+    if(!sa && wb.length>=1) return false; // tracker has last name but sched doesn't — ambiguous
+    if(!sb && wa.length>=1) return false; // sched has last name but tracker doesn't — ambiguous
   }
   return false;
 }
@@ -2440,7 +2333,7 @@ function openQA(day,time){
   document.getElementById('qa-type').value='Regular';
   // populate trainer dropdown
   const sel=document.getElementById('qa-trainer');
-  sel.innerHTML='<option value=""> Select </option>'+trainers.map(t=>'<option>'+x(t)+'</option>').join('');
+  sel.innerHTML='<option value=""> Select </option>'+'<option value="Changed" style="color:#ff1493;font-weight:600">Changed</option>'+trainers.map(t=>'<option>'+x(t)+'</option>').join('');
   document.getElementById('qa-modal').classList.add('open');
   setTimeout(()=>document.getElementById('qa-learner').focus(),120);
 }
@@ -2466,18 +2359,26 @@ let _pendingSlot = null; // holds the slot data waiting for user confirmation
 function findDuplicateSlots(learnerName){
   const norm = n => (n||'').toLowerCase().replace(/[_\-()]/g,' ').replace(/\s+/g,' ').trim();
   const target = norm(learnerName);
-  const tw = target.split(' ').filter(Boolean);
+  const targetWords = target.split(' ').filter(Boolean);
   const found = [];
   DAYS.forEach(day=>{
     (schedule[day]||[]).forEach(s=>{
       if(!s.learner) return;
       const sn = norm(s.learner);
       if(sn===target){ found.push({...s, day}); return; }
-      const sw = sn.split(' ').filter(Boolean);
-      if(tw.length>=2 && sw.length>=2 && tw[0]===sw[0] && tw[1]===sw[1])
-        found.push({...s, day});
-      else if(tw.length===1 && sw.length===1 && tw[0]===sw[0] && tw[0].length>4)
-        found.push({...s, day});
+      // Only match if BOTH first AND second word match
+      // e.g. "Astha Jain" ≠ "Astha Rana" (second words differ)
+      // but "Parul Pal" == "Parul Pal_may25" (both words match)
+      const snWords = sn.split(' ').filter(Boolean);
+      if(targetWords.length>=2 && snWords.length>=2){
+        if(targetWords[0]===snWords[0] && targetWords[1]===snWords[1])
+          found.push({...s, day});
+      } else if(targetWords.length===1 && snWords.length===1){
+        // Single-word names: only exact match
+        if(targetWords[0]===snWords[0] && targetWords[0].length>4)
+          found.push({...s, day});
+      }
+      // If one has 1 word and other has 2+, don't match — too ambiguous
     });
   });
   return found;
@@ -2536,7 +2437,8 @@ function _commitSlot(data){
 function submitSlot(){
   const time=document.getElementById('nf-time').value;
   const learner=document.getElementById('nf-learner').value.trim();
-  if(!time||!learner){alert('Please select a time slot and enter learner name');return;}
+  if(!time){alert('Please select a time slot');return;}
+  // Allow empty learner names - can be filled later
   // Max 4 per time slot
   const slotsAtTime=(schedule[currentDay]||[]).filter(s=>s.time===time);
   if(slotsAtTime.length>=4){
@@ -2557,28 +2459,32 @@ function submitSlot(){
   }
   const addedBy=currentUser?currentUser.email:'unknown';
   const slotData={day:currentDay, time, learner, note, trainer, coTrainer, type, addedBy, addedAt:new Date().toISOString(), source:'form'};
-  // Check for duplicate learner this week
-  const dups = findDuplicateSlots(learner);
-  if(dups.length>0){
-    showDupModal(learner, slotData);
-    return;
+  // Check for duplicate learner this week (skip if learner name is empty)
+  if(learner){
+    const dups = findDuplicateSlots(learner);
+    if(dups.length>0){
+      showDupModal(learner, slotData);
+      return;
+    }
   }
   _commitSlot(slotData);
 }
 
 function submitQA(){
   const learner=document.getElementById('qa-learner').value.trim();
-  if(!learner){alert('Please enter a learner name');return;}
+  // Allow empty learner names - can be filled later
   const trainer=document.getElementById('qa-trainer').value;
   const type=document.getElementById('qa-type').value||'Regular';
   const note=document.getElementById('qa-note').value.trim();
   const addedBy=currentUser?currentUser.email:'unknown';
   const slotData={day:qaDay, time:qaTime, learner, note, trainer, coTrainer:'', type, addedBy, addedAt:new Date().toISOString(), source:'qa'};
-  // Check for duplicate learner this week
-  const dups = findDuplicateSlots(learner);
-  if(dups.length>0){
-    showDupModal(learner, slotData);
-    return;
+  // Check for duplicate learner this week (skip if learner name is empty)
+  if(learner){
+    const dups = findDuplicateSlots(learner);
+    if(dups.length>0){
+      showDupModal(learner, slotData);
+      return;
+    }
   }
   _commitSlot(slotData);
 }
@@ -3637,9 +3543,12 @@ function renderMsgStats(){
 // --- MISC -----------------------------------------------------------------
 function flashSave(){
   const btn=document.querySelector('.btn-primary');
-  btn.textContent='Saving…'; btn.style.background='#22c55e';
-  if(db && fbConnected) _doWrite();
-  setTimeout(()=>{btn.textContent='✓ Save All';btn.style.background='';},2000);
+  btn.textContent=' Saving…'; btn.style.background='#22c55e';
+  // Actually trigger a Firebase save
+  if(db && fbConnected){
+    _doWrite();
+  }
+  setTimeout(()=>{btn.textContent=' Save All';btn.style.background='';},2000);
 }
 function exportCSV(){
   let csv='Day,Time,Learner,Note,Trainer,Attendance,Type\n';
@@ -3903,18 +3812,18 @@ function quickEditTask(cat, id){
 }
 
 // --- INIT -----------------------------------------------------------------
+// Clear any stale week memory from previous buggy versions
+try{ localStorage.removeItem('sib_lastWeek'); }catch(e){}
 document.getElementById('cur-date').textContent=fmtDate();
 const today=new Date();
-// Use local date (toISOString is UTC — wrong for IST/UTC+5:30)
-const _tl=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
-document.getElementById('sched-date').value=_tl;
+// Use local date for date picker (toISOString is UTC and shows wrong date in IST)
+const _todayLocal = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+document.getElementById('sched-date').value=_todayLocal;
 // Set current week key from today
 currentWeekKey=getWeekKey();
-// schedule populated from Firebase — start empty
+// schedule will be populated from Firebase — start with empty placeholder
 scheduleByWeek[currentWeekKey]={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
 schedule=scheduleByWeek[currentWeekKey];
-// Clear any stale localStorage
-try{ localStorage.removeItem('sib_lastWeek'); }catch(e){}
 document.getElementById('week-indicator').textContent='Week of '+fmtWeekRange(currentWeekKey);
 const todayName=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][today.getDay()];
 const defaultDay=DAYS.includes(todayName)?todayName:'Monday';
@@ -4271,88 +4180,162 @@ function deleteExt(id){
 }
 
 
-// ── SEEDED DATA: March 16 2026 (Monday) — injected from PDF ─────────────
+// ── SEEDED DATA: March 16 2026 (Monday) — injected from PDF ────────────────
 (function seedMarch16(){
   const WK = '2026-03-16';
   const SLOTS = [
-    {id:2001,time:'10:30',learner:'Naincy Verma',trainer:'',coTrainer:'',type:'Regular',note:'Reschedule',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2002,time:'10:30',learner:'Shraddha Patel',trainer:'Riya',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2003,time:'11:00',learner:'Farheen Banu',trainer:'Jagriti',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2004,time:'11:00',learner:'Ishu Bharti_September25_skillinabox_fashion',trainer:'Bharti',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2005,time:'11:30',learner:'Vishkha Sharma',trainer:'',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2006,time:'11:30',learner:'Maryam Naqvi',trainer:'',coTrainer:'',type:'Regular',note:'shift this class',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2007,time:'12:00',learner:'Meenakshi_June25_Skillinabox',trainer:'',coTrainer:'',type:'Regular',note:'Reschedule',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2008,time:'12:00',learner:'Nistha jindal',trainer:'Jagriti',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2009,time:'12:00',learner:'Anchal Mishra',trainer:'Priya',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2010,time:'1:00',learner:'Afreen oct 25',trainer:'Priya',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2011,time:'1:30',learner:'Tammana Gupta',trainer:'Bharti',coTrainer:'',type:'Regular',note:'NC',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2012,time:'2:45',learner:'Supriya_July25_Skillinabox_',trainer:'Jagriti',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2013,time:'3:00',learner:"Garima_May'25_SIB",trainer:'Disha',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2014,time:'3:00',learner:'Chandrani Das',trainer:'Riya',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2015,time:'3:00',learner:'Aparna Thakur',trainer:'Ayushi Rai',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2016,time:'3:30',learner:'Rutusha Patel',trainer:'Jagriti',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2017,time:'3:30',learner:'Meenakshi_June25_Skillinabox',trainer:'Sneha',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2018,time:'4:00',learner:'MOOD BOARD/CANVA MEETING',trainer:'Ruchi',coTrainer:'',type:'Mood Board',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2019,time:'4:00',learner:'Aparna_July25_Skillinabox',trainer:'Jagriti',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2020,time:'4:00',learner:'Sarmistha_june25_skillinabox',trainer:'',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2021,time:'4:30',learner:'Maryam Naqvi',trainer:'Priya',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2022,time:'4:30',learner:'Alshifa_Apr25',trainer:'',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2023,time:'4:30',learner:'Amrita Sharma',trainer:'Akansha',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2024,time:'5:00',learner:'Basic intro',trainer:'',coTrainer:'',type:'Intro Session',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2025,time:'5:00',learner:'divyanshi aug',trainer:'Jagriti',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2026,time:'5:00',learner:'Laxmi Thapa',trainer:'Ayushi Rai',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2027,time:'5:30',learner:'Roshni Roshni',trainer:'Jagriti',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2028,time:'5:30',learner:'Purvi Upadhaya_(August 25)_Skillinabox_Fashion',trainer:'',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2029,time:'5:30',learner:'Bhawna verma',trainer:'Akansha',coTrainer:'',type:'Regular',note:'Reschedule at 5:30',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2030,time:'6:00',learner:'Yashika Patil - PORT-EX-20TH Jan26',trainer:'Priya',coTrainer:'',type:'Garment Review',note:'Garment Review - check the group',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2031,time:'6:00',learner:'Nigar_(Sep_25)/OctFashion_Skillinabox(LMS- 1/10/26)',trainer:'',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2032,time:'6:00',learner:'Nusrat_Skillinabox(Sep25)_FD',trainer:'Ayushi Rai',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2033,time:'6:30',learner:'MANISHA OCT 25',trainer:'',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2034,time:'6:30',learner:'Vandana oct',trainer:'',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2035,time:'7:00',learner:'Intro session akansha',trainer:'Priya',coTrainer:'',type:'Intro Session',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2036,time:'7:00',learner:'Gulafsha na',trainer:'Disha',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
-    {id:2037,time:'7:00',learner:'Astha Jain',trainer:'Bharti',coTrainer:'',type:'Regular',note:'machine related',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'}
+  {id:2001,time:'10:30',learner:'Naincy Verma',trainer:'',coTrainer:'',type:'Regular',note:'Reschedule',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2002,time:'10:30',learner:'Shraddha Patel',trainer:'Riya',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2003,time:'11:00',learner:'Farheen Banu',trainer:'Jagriti',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2004,time:'11:00',learner:'Ishu Bharti_September25_skillinabox_fashion',trainer:'Bharti',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2005,time:'11:30',learner:'Vishkha Sharma',trainer:'',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2006,time:'11:30',learner:'Maryam Naqvi',trainer:'',coTrainer:'',type:'Regular',note:'shift this class',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2007,time:'12:00',learner:'Meenakshi_June25_Skillinabox',trainer:'',coTrainer:'',type:'Regular',note:'Reschedule',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2008,time:'12:00',learner:'Nistha jindal',trainer:'Jagriti',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2009,time:'12:00',learner:'Anchal Mishra',trainer:'Priya',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2010,time:'1:00',learner:'Afreen oct 25',trainer:'Priya',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2011,time:'1:30',learner:'Tammana Gupta',trainer:'Bharti',coTrainer:'',type:'Regular',note:'NC',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2012,time:'2:45',learner:'Supriya_July25_Skillinabox_',trainer:'Jagriti',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2013,time:'3:00',learner:'Garima_May\'25_SIB',trainer:'Disha',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2014,time:'3:00',learner:'Chandrani Das',trainer:'Riya',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2015,time:'3:00',learner:'Aparna Thakur',trainer:'Ayushi Rai',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2016,time:'3:30',learner:'Rutusha Patel',trainer:'Jagriti',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2017,time:'3:30',learner:'Meenakshi_June25_Skillinabox',trainer:'Sneha',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2018,time:'4:00',learner:'MOOD BOARD/CANVA MEETING',trainer:'Ruchi',coTrainer:'',type:'Mood Board',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2019,time:'4:00',learner:'Aparna_July25_Skillinabox',trainer:'Jagriti',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2020,time:'4:00',learner:'Sarmistha_june25_skillinabox',trainer:'',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2021,time:'4:30',learner:'Maryam Naqvi',trainer:'Priya',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2022,time:'4:30',learner:'Alshifa_Apr25',trainer:'',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2023,time:'4:30',learner:'Amrita Sharma',trainer:'Akansha',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2024,time:'5:00',learner:'Basic intro',trainer:'',coTrainer:'',type:'Intro Session',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2025,time:'5:00',learner:'divyanshi aug',trainer:'Jagriti',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2026,time:'5:00',learner:'Laxmi Thapa',trainer:'Ayushi Rai',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2027,time:'5:30',learner:'Roshni Roshni',trainer:'Jagriti',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2028,time:'5:30',learner:'Purvi Upadhaya_(August 25)_Skillinabox_Fashion',trainer:'',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2029,time:'5:30',learner:'Bhawna verma',trainer:'Akansha',coTrainer:'',type:'Regular',note:'Reschedule at 5:30',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2030,time:'6:00',learner:'Yashika Patil - PORT-EX-20TH Jan26',trainer:'Priya',coTrainer:'',type:'Garment Review',note:'Garment Review - check the group',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2031,time:'6:00',learner:'Nigar_(Sep_25)/OctFashion_Skillinabox(LMS- 1/10/26)',trainer:'',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2032,time:'6:00',learner:'Nusrat_Skillinabox(Sep25)_FD',trainer:'Ayushi Rai',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2033,time:'6:30',learner:'MANISHA OCT 25',trainer:'',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2034,time:'6:30',learner:'Vandana oct',trainer:'',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2035,time:'7:00',learner:'Intro session akansha',trainer:'Priya',coTrainer:'',type:'Intro Session',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2036,time:'7:00',learner:'Gulafsha na',trainer:'Disha',coTrainer:'',type:'Regular',note:'',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'},
+  {id:2037,time:'7:00',learner:'Astha Jain',trainer:'Bharti',coTrainer:'',type:'Regular',note:'machine related',addedBy:'astha',addedAt:'2026-03-16T00:00:00.000Z'}
   ];
-  const ATT = {2001:'RS',2002:'P',2003:'P',2004:'A',2007:'RS',2008:'P',2010:'P',2011:'NC',2012:'P',2013:'P',2014:'P',2015:'P',2016:'P',2017:'P',2019:'P',2021:'P',2023:'P',2025:'P',2026:'A',2027:'P',2029:'RS'};
+  const ATT = {
+  2001: {att:'RS',note:''},
+  2002: {att:'P',note:''},
+  2003: {att:'P',note:''},
+  2004: {att:'A',note:''},
+  2007: {att:'RS',note:''},
+  2008: {att:'P',note:''},
+  2010: {att:'P',note:''},
+  2011: {att:'NC',note:''},
+  2012: {att:'P',note:''},
+  2013: {att:'P',note:''},
+  2014: {att:'P',note:''},
+  2015: {att:'P',note:''},
+  2016: {att:'P',note:''},
+  2017: {att:'P',note:''},
+  2019: {att:'P',note:''},
+  2021: {att:'P',note:''},
+  2023: {att:'P',note:''},
+  2025: {att:'P',note:''},
+  2026: {att:'A',note:''},
+  2027: {att:'P',note:''},
+  2029: {att:'RS',note:''}
+  };
+
+  // Called after Firebase loads — patches in the March 16 data if Firebase
+  // doesn't already have it (avoids overwriting if user already re-entered data)
   window._seedMarch16 = function(){
-    const existing = (scheduleByWeek[WK]&&scheduleByWeek[WK]['Monday'])||[];
-    if(existing.length >= 10){ console.log('March 16 already has',existing.length,'slots — skip seed'); return; }
-    console.log('Seeding March 16…');
-    if(!scheduleByWeek[WK]) scheduleByWeek[WK]={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
+    // Only seed if March 16 Monday has fewer than 10 slots
+    const existing = (scheduleByWeek[WK] && scheduleByWeek[WK]['Monday']) || [];
+    if(existing.length >= 10){
+      console.log('March 16 already has', existing.length, 'slots — skipping seed');
+      return;
+    }
+    console.log('Seeding March 16 data…');
+    if(!scheduleByWeek[WK]) scheduleByWeek[WK] = {Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
     scheduleByWeek[WK]['Monday'] = SLOTS;
-    if(!allWeekData[WK]) allWeekData[WK]={attData:{},msgDoneData:{},msgSlots:{Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]},tasks:{training:[],operations:[],marketing:[],admin:[],other:[]},tracker:[]};
-    if(!allWeekData[WK].attData) allWeekData[WK].attData={};
-    Object.keys(ATT).forEach(id=>{ allWeekData[WK].attData[id]={att:ATT[id],note:''}; });
+    // Set attendance
+    if(!allWeekData[WK]) allWeekData[WK] = {attData:{},msgDoneData:{},msgSlots:{Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]},tasks:{training:[],operations:[],marketing:[],admin:[],other:[]},tracker:[]};
+    if(!allWeekData[WK].attData) allWeekData[WK].attData = {};
+    Object.keys(ATT).forEach(id=>{ allWeekData[WK].attData[id] = {att:ATT[id], note:''}; });
+    // Update slotId counter to avoid collisions
     if(slotId < 2037) slotId = 2037;
-    if(db && fbConnected){ schedule=scheduleByWeek[currentWeekKey]; fbSave(); }
-    console.log('✅ March 16 seeded');
+    // Save to Firebase
+    if(db && fbConnected){
+      schedule = scheduleByWeek[currentWeekKey];
+      fbSave();
+      console.log('✅ March 16 seeded and saved to Firebase');
+    }
   };
 })();
 
-
-// ── MOBILE NAV ────────────────────────────────────────────────────────────
-function setMobActive(btn){
-  document.querySelectorAll('.mob-nav-btn').forEach(b=>b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-}
-function toggleMobMore(){
-  const m=document.getElementById('mob-more-menu');
-  if(m) m.style.display = m.style.display==='none'?'block':'none';
-}
-function closeMobMore(){
-  const m=document.getElementById('mob-more-menu');
-  if(m) m.style.display='none';
-}
-document.addEventListener('click',e=>{
-  const menu=document.getElementById('mob-more-menu');
-  if(menu && menu.style.display!=='none'){
-    const moreBtn = document.querySelector('.mob-nav-btn:last-child');
-    if(!menu.contains(e.target) && !(moreBtn&&moreBtn.contains(e.target)))
-      menu.style.display='none';
-  }
-});
-
 function seedDefaultMsgSlots(){ return false; }
+
+// ── DIAGNOSTIC: shows what data is actually loaded ────────────────────────
+function showDiagnostic(){
+  const weeks = Object.keys(scheduleByWeek).sort();
+  const weekInfo = weeks.map(wk=>{
+    const total = DAYS.reduce((n,d)=>n+(scheduleByWeek[wk][d]||[]).length,0);
+    const hasAtt = allWeekData[wk] && Object.keys(allWeekData[wk].attData||{}).length;
+    return `<tr>
+      <td style="padding:0.3rem 0.6rem;font-size:0.75rem;font-weight:600;color:${wk===currentWeekKey?'#F26522':'#EEF2FF'}">${wk}${wk===currentWeekKey?' ← current':''}</td>
+      <td style="padding:0.3rem 0.6rem;font-size:0.75rem;color:#22c55e;text-align:center">${total} slots</td>
+      <td style="padding:0.3rem 0.6rem;font-size:0.75rem;color:#29ABE2;text-align:center">${hasAtt||0} att records</td>
+      <td style="padding:0.3rem 0.6rem;font-size:0.75rem;color:#a78bfa;text-align:center">${(allWeekData[wk]&&(allWeekData[wk].tracker||[]).length)||0} tracker</td>
+    </tr>`;
+  }).join('');
+
+  // Sample Monday slots for current week
+  const sampleSlots = (scheduleByWeek[currentWeekKey]&&scheduleByWeek[currentWeekKey]['Monday']||[]).slice(0,5);
+  const sampleHtml = sampleSlots.length
+    ? sampleSlots.map(s=>`<div style="font-size:0.72rem;padding:0.18rem 0;border-bottom:1px solid #1e3a6e;color:#EEF2FF">${s.time} — ${s.learner} — <span style="color:#29ABE2">${s.trainer||'(no trainer)'}</span></div>`).join('')
+    : '<div style="font-size:0.72rem;color:#ef4444">No slots for current week Monday</div>';
+
+  const fbStatus = (db && fbConnected) ? '<span style="color:#22c55e">● Connected</span>' : '<span style="color:#ef4444">● Not connected</span>';
+
+  let existing = document.getElementById('diag-modal');
+  if(existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'diag-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:99997;display:flex;align-items:center;justify-content:center;';
+  modal.innerHTML = `
+    <div style="background:#0f1e38;border:1px solid #1e3a6e;border-radius:14px;padding:1.5rem;max-width:600px;width:92%;max-height:85vh;overflow-y:auto;font-family:-apple-system,sans-serif;box-shadow:0 20px 60px rgba(0,0,0,0.6)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <div style="font-weight:800;font-size:1rem;color:#EEF2FF;text-transform:uppercase;letter-spacing:0.06em;">🔍 Data Diagnostic</div>
+        <button onclick="document.getElementById('diag-modal').remove()" style="background:none;border:none;color:#7a8db5;font-size:1.1rem;cursor:pointer;">✕</button>
+      </div>
+      <div style="display:flex;gap:1rem;margin-bottom:1rem;font-size:0.75rem;flex-wrap:wrap;">
+        <span>Firebase: ${fbStatus}</span>
+        <span style="color:#9EA3A8">Current week: <strong style="color:#F26522">${currentWeekKey}</strong></span>
+        <span style="color:#9EA3A8">Weeks loaded: <strong style="color:#29ABE2">${weeks.length}</strong></span>
+        <span style="color:#9EA3A8">Trainers: <strong style="color:#22c55e">${trainers.length}</strong></span>
+      </div>
+      <div style="background:#091328;border-radius:8px;overflow:hidden;margin-bottom:1rem;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead><tr style="background:#0D1B3E;border-bottom:2px solid #1e3a6e;">
+            <th style="padding:0.4rem 0.6rem;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.1em;color:#9EA3A8;text-align:left">Week</th>
+            <th style="padding:0.4rem 0.6rem;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.1em;color:#9EA3A8;text-align:center">Slots</th>
+            <th style="padding:0.4rem 0.6rem;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.1em;color:#9EA3A8;text-align:center">Attendance</th>
+            <th style="padding:0.4rem 0.6rem;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.1em;color:#9EA3A8;text-align:center">Tracker</th>
+          </tr></thead>
+          <tbody>${weekInfo}</tbody>
+        </table>
+      </div>
+      <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#7a8db5;margin-bottom:0.4rem;">Sample: Current week Monday slots</div>
+      <div style="background:#091328;border-radius:8px;padding:0.6rem 0.75rem;margin-bottom:1rem;">${sampleHtml}</div>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+        <button onclick="if(db&&fbConnected){_doWrite();setTimeout(()=>alert('Saved to Firebase!'),800);}else{alert('Not connected to Firebase');}" style="background:#22c55e;border:none;border-radius:6px;padding:0.4rem 0.9rem;color:#0B1628;font-size:0.75rem;font-weight:700;cursor:pointer;">💾 Force Save Now</button>
+        <button onclick="location.reload()" style="background:#29ABE2;border:none;border-radius:6px;padding:0.4rem 0.9rem;color:#0B1628;font-size:0.75rem;font-weight:700;cursor:pointer;">🔄 Reload Page</button>
+        <button onclick="document.getElementById('diag-modal').remove()" style="background:none;border:1px solid #1e3a6e;border-radius:6px;padding:0.4rem 0.9rem;color:#7a8db5;font-size:0.75rem;cursor:pointer;">Close</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e=>{ if(e.target===modal) modal.remove(); });
+}
 
 // ═══════════════════════════════════════════════════════════
 // FIREBASE AUTHENTICATION
@@ -4366,6 +4349,7 @@ function initAuth(firebaseApp){
     if(user){
       currentUser = user;
       document.getElementById('login-overlay').style.display = 'none';
+      // Keep main hidden — show it only AFTER Firebase data loads (prevents blank flash)
       document.getElementById('main-content').style.display = 'none';
       document.querySelector('.sidebar').style.display = 'none';
       document.getElementById('user-badge').style.display = 'none';
@@ -4376,16 +4360,17 @@ function initAuth(firebaseApp){
       document.getElementById('user-email-lbl').textContent = user.email;
       connectDatabase();
       setTimeout(renderNotifBell, 2000);
-      // Safety: show app after 8s even if Firebase is slow
+      // Safety: if Firebase takes >6s, show app anyway
       setTimeout(()=>{
-        if(document.getElementById('app-loader').style.display!=='none'){
-          document.getElementById('app-loader').style.display='none';
-          document.getElementById('main-content').style.display='';
-          document.querySelector('.sidebar').style.display='';
-          document.getElementById('user-badge').style.display='flex';
+        if(document.getElementById('app-loader').style.display !== 'none'){
+          document.getElementById('app-loader').style.display = 'none';
+          document.getElementById('main-content').style.display = '';
+          document.querySelector('.sidebar').style.display = '';
+          document.getElementById('user-badge').style.display = 'flex';
         }
-      }, 8000);
+      }, 6000);
     } else {
+      // Not logged in — show login screen, hide loader
       currentUser = null;
       document.getElementById('app-loader').style.display = 'none';
       document.getElementById('login-overlay').style.display = 'flex';
@@ -4463,17 +4448,22 @@ function connectDatabase(){
       } else {
         setTimeout(()=>{ if(db && fbConnected) _doWrite(); }, 1000);
       }
+
       seedDefaultMsgSlots();
-      // Seed March 16 if needed
-      if(typeof window._seedMarch16==='function') window._seedMarch16();
-      // Re-point schedule to current week
-      if(!scheduleByWeek[currentWeekKey])
+
+      // After Firebase loads — always stay on the actual current week.
+      // currentWeekKey was already set to today's week during INIT.
+      // Just make sure the schedule pointer and UI are correct.
+      if(!scheduleByWeek[currentWeekKey]){
         scheduleByWeek[currentWeekKey]={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
+      }
       schedule = scheduleByWeek[currentWeekKey];
-      // Sync UI to today
+
+      // Sync date picker and week indicator to current week
       const _now = new Date();
+      const _todayStr = _now.getFullYear()+'-'+String(_now.getMonth()+1).padStart(2,'0')+'-'+String(_now.getDate()).padStart(2,'0');
       const _inp2 = document.getElementById('sched-date');
-      if(_inp2) _inp2.value = _now.getFullYear()+'-'+String(_now.getMonth()+1).padStart(2,'0')+'-'+String(_now.getDate()).padStart(2,'0');
+      if(_inp2) _inp2.value = _todayStr;
       const _wi2 = document.getElementById('week-indicator');
       if(_wi2) _wi2.textContent = 'Week of '+fmtWeekRange(currentWeekKey);
       const _todayName2 = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][_now.getDay()];
@@ -4481,21 +4471,27 @@ function connectDatabase(){
       currentMsgDay = currentDay;
       document.querySelectorAll('#tab-schedule .day-btn').forEach((b,i)=>b.classList.toggle('active',DAYS[i]===currentDay));
       document.querySelectorAll('#tab-messages .day-btn').forEach((b,i)=>b.classList.toggle('active',DAYS[i]===currentDay));
+
+
+      // Seed March 16 data if not already in Firebase
+      if(typeof window._seedMarch16 === 'function') window._seedMarch16();
+      // Re-point schedule after potential seed
+      schedule = scheduleByWeek[currentWeekKey];
       renderAll();
       fbListen();
-      // Show app — data is ready
+      // Show app now that data is ready
       document.getElementById('app-loader').style.display = 'none';
       document.getElementById('main-content').style.display = '';
       document.querySelector('.sidebar').style.display = '';
       document.getElementById('user-badge').style.display = 'flex';
       setSyncStatus('saved','Live sync on');
     }).catch(e=>{
-      console.error('DB read error:', e);
+      console.error('🔥 DB read error:', e);
       document.getElementById('app-loader').style.display = 'none';
       document.getElementById('main-content').style.display = '';
       document.querySelector('.sidebar').style.display = '';
       document.getElementById('user-badge').style.display = 'flex';
-      setSyncStatus('error','Cannot read data — check Firebase rules');
+      setSyncStatus('error','⚠️ Cannot read data — rules may have expired');
       showSaveErrorBanner(e);
       renderAll();
     });
@@ -4521,6 +4517,48 @@ function connectDatabase(){
 
 </script>
 
+<!-- FIREBASE RULES FIX MODAL -->
+<div id="rules-fix-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:99998;align-items:center;justify-content:center;">
+  <div style="background:#0f1e38;border:1px solid #1e3a6e;border-radius:14px;padding:1.8rem;max-width:560px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.6);font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.1rem;">
+      <div style="font-family:'Arial Black',sans-serif;font-size:1.1rem;font-weight:800;color:#EEF2FF;text-transform:uppercase;letter-spacing:0.04em;">🔧 Fix Firebase Rules</div>
+      <button onclick="document.getElementById('rules-fix-modal').style.display='none'" style="background:none;border:none;color:#7a8db5;font-size:1.1rem;cursor:pointer;">✕</button>
+    </div>
+    <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:0.75rem 1rem;margin-bottom:1.2rem;font-size:0.78rem;color:#fca5a5;line-height:1.5;">
+      <strong>⚠️ Your data is not being saved!</strong><br>
+      Firebase "test mode" database rules expire after 30 days. This is the most common reason data vanishes on reload.
+    </div>
+    <div style="font-size:0.8rem;color:#7a8db5;margin-bottom:1rem;line-height:1.6;">Follow these steps to fix it in ~2 minutes:</div>
+    <div style="display:flex;flex-direction:column;gap:0.75rem;margin-bottom:1.3rem;">
+      <div style="display:flex;gap:0.75rem;align-items:flex-start;font-size:0.78rem;color:#EEF2FF;line-height:1.5;">
+        <span style="background:#29ABE2;color:#0B1628;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.7rem;flex-shrink:0;margin-top:1px;">1</span>
+        <span>Open <a href="https://console.firebase.google.com" target="_blank" style="color:#29ABE2;font-weight:600;">console.firebase.google.com</a> → select your project (<strong>skillinabox-63ad8</strong>)</span>
+      </div>
+      <div style="display:flex;gap:0.75rem;align-items:flex-start;font-size:0.78rem;color:#EEF2FF;line-height:1.5;">
+        <span style="background:#29ABE2;color:#0B1628;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.7rem;flex-shrink:0;margin-top:1px;">2</span>
+        <span>In the left sidebar: <strong>Build → Realtime Database → Rules</strong> tab</span>
+      </div>
+      <div style="display:flex;gap:0.75rem;align-items:flex-start;font-size:0.78rem;color:#EEF2FF;line-height:1.5;">
+        <span style="background:#F26522;color:white;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.7rem;flex-shrink:0;margin-top:1px;">3</span>
+        <span>Replace <strong>all the text</strong> in the rules editor with this:</span>
+      </div>
+    </div>
+    <div style="background:#091328;border:1px solid #1e3a6e;border-radius:8px;padding:0.75rem 1rem;margin-bottom:1.2rem;font-family:monospace;font-size:0.78rem;color:#22c55e;position:relative;">
+      {<br>&nbsp;&nbsp;"rules": {<br>&nbsp;&nbsp;&nbsp;&nbsp;".read": "auth != null",<br>&nbsp;&nbsp;&nbsp;&nbsp;".write": "auth != null"<br>&nbsp;&nbsp;}<br>}
+      <button onclick="navigator.clipboard.writeText('{\n  \"rules\": {\n    \".read\": \"auth != null\",\n    \".write\": \"auth != null\"\n  }\n}').then(()=>{this.textContent=\'✓ Copied!\';setTimeout(()=>this.textContent=\'Copy\',2000)})" style="position:absolute;top:8px;right:8px;background:rgba(41,171,226,0.15);border:1px solid rgba(41,171,226,0.3);border-radius:5px;color:#29ABE2;font-size:0.68rem;padding:0.18rem 0.55rem;cursor:pointer;font-family:-apple-system,sans-serif;">Copy</button>
+    </div>
+    <div style="font-size:0.78rem;color:#EEF2FF;display:flex;gap:0.75rem;align-items:flex-start;line-height:1.5;margin-bottom:1.3rem;">
+      <span style="background:#F26522;color:white;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.7rem;flex-shrink:0;margin-top:1px;">4</span>
+      <span>Click the <strong>Publish</strong> button → come back here and <strong>refresh the page</strong>. Your data will load.</span>
+    </div>
+    <div style="display:flex;gap:0.5rem;">
+      <a href="https://console.firebase.google.com/project/skillinabox-63ad8/database/skillinabox-63ad8-default-rtdb/rules" target="_blank" style="flex:1;background:#29ABE2;color:#0B1628;border:none;border-radius:7px;padding:0.55rem 1rem;font-size:0.8rem;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:0.3rem;">🔗 Open Firebase Rules Directly</a>
+      <button onclick="document.getElementById('rules-fix-modal').style.display='none'" style="background:none;border:1px solid #1e3a6e;color:#7a8db5;border-radius:7px;padding:0.55rem 1rem;font-size:0.8rem;cursor:pointer;">Close</button>
+    </div>
+  </div>
+</div>
+
+
 <!-- APP LOADING SCREEN -->
 <div id="app-loader" style="display:none;position:fixed;inset:0;background:#0B1628;z-index:9000;flex-direction:column;align-items:center;justify-content:center;gap:1.2rem;">
   <div style="display:flex;flex-direction:column;gap:5px;">
@@ -4537,23 +4575,5 @@ function connectDatabase(){
   <div style="font-size:0.78rem;color:#7a8db5;">Loading your schedule…</div>
 </div>
 <style>@keyframes ldp{0%,100%{opacity:0.3;transform:scale(0.8);}50%{opacity:1;transform:scale(1.2);}}</style>
-
-<!-- MOBILE BOTTOM NAV -->
-<nav id="mobile-bottom-nav" style="display:none;">
-  <button class="mob-nav-btn active" onclick="switchTab('schedule',this);setMobActive(this)"><span class="mob-icon">📅</span>Schedule</button>
-  <button class="mob-nav-btn" onclick="switchTab('tracker',this);setMobActive(this)"><span class="mob-icon">📊</span>Tracker</button>
-  <button class="mob-nav-btn" onclick="switchTab('trainers',this);setMobActive(this)"><span class="mob-icon">👩‍🏫</span>Trainers</button>
-  <button class="mob-nav-btn" onclick="switchTab('messages',this);setMobActive(this)"><span class="mob-icon">💬</span>Messages</button>
-  <button class="mob-nav-btn" onclick="switchTab('tasks',this);setMobActive(this)"><span class="mob-icon">✅</span>Tasks</button>
-  <button class="mob-nav-btn" onclick="toggleMobMore()"><span class="mob-icon">⋯</span>More</button>
-</nav>
-<div id="mob-more-menu" style="display:none;position:fixed;bottom:56px;left:0;right:0;background:#0D1B3E;border-top:1px solid #1e3a6e;z-index:999;padding:0.5rem;">
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;padding:0.3rem;">
-    <button onclick="switchTab('ext',document.querySelector('.mob-nav-btn'));closeMobMore()" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:0.6rem;color:var(--text);font-size:0.78rem;cursor:pointer;font-family:inherit;">📋 Extensions</button>
-    <button onclick="switchTab('trash',document.querySelector('.mob-nav-btn'));closeMobMore()" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:0.6rem;color:var(--text);font-size:0.78rem;cursor:pointer;font-family:inherit;">🗑️ Trash</button>
-    <button onclick="exportCSV();closeMobMore()" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:0.6rem;color:var(--text);font-size:0.78rem;cursor:pointer;font-family:inherit;">⬇ Export</button>
-    <button onclick="flashSave();closeMobMore()" style="background:var(--sib-orange);border:none;border-radius:8px;padding:0.6rem;color:white;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:inherit;">✓ Save All</button>
-  </div>
-</div>
 </body>
 </html>
