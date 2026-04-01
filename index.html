@@ -3079,13 +3079,38 @@ function tminMsg(t){
 function getMsgSlotConflict(trainerName, day, sessionTimeStr){
   if(!trainerName || !day || !sessionTimeStr) return null;
   const msgSlotsForDay = (wMsgSlots()[day])||[];
-  const sessionMin = tmin(sessionTimeStr);
+ 
+  // FIX: Schedule times like "10:30","1:00","7:00" have no am/pm.
+  // Hours 1-9 in the schedule are PM (same assumption as tmin()).
+  // We convert using this rule so the scale matches tminMsg() used for from/to.
+  function sessionToMin(t){
+    if(!t) return -1;
+    t = t.toString().trim();
+    if(/[ap]m/i.test(t)) return tminMsg(t);
+    const parts = t.split(':');
+    let h = parseInt(parts[0])||0;
+    const m = parseInt(parts[1])||0;
+    if(h >= 1 && h <= 9) h += 12; // 1:00->13, 7:00->19
+    return h * 60 + m;
+  }
+ 
+  const sessionMin = sessionToMin(sessionTimeStr);
+ 
   return msgSlotsForDay.find(ms=>{
-    const tArr = (ms.trainers&&ms.trainers.length) ? ms.trainers : (ms.trainer?[ms.trainer]:[]);
+    // Support both old comma-string trainer field AND new trainers array
+    let tArr = [];
+    if(ms.trainers && ms.trainers.length){
+      tArr = ms.trainers;
+    } else if(ms.trainer){
+      tArr = ms.trainer.split(',').map(t=>t.trim()).filter(Boolean);
+    }
     if(!tArr.includes(trainerName)) return false;
+ 
     const fromMin = tminMsg(ms.from);
     const toMin   = tminMsg(ms.to);
-    // Handle overnight slots (e.g. 7:30pm → 12am)
+    if(fromMin < 0 || toMin < 0) return false;
+ 
+    // Handle overnight slots (e.g. 11pm -> 1am)
     if(fromMin > toMin){
       return sessionMin >= fromMin || sessionMin < toMin;
     }
