@@ -3099,11 +3099,13 @@ function getMsgSlotConflict(trainerName, day, sessionTimeStr){
   return msgSlotsForDay.find(ms=>{
     // Support both old comma-string trainer field AND new trainers array
     let tArr = [];
-    if(ms.trainers && ms.trainers.length){
+    if(ms.trainers && Array.isArray(ms.trainers) && ms.trainers.length > 0){
       tArr = ms.trainers;
-    } else if(ms.trainer){
+    } else if(ms.trainer && typeof ms.trainer === 'string' && ms.trainer.trim()){
       tArr = ms.trainer.split(',').map(t=>t.trim()).filter(Boolean);
     }
+    // If no trainers assigned to this slot, no conflict
+    if(tArr.length === 0) return false;
     if(!tArr.includes(trainerName)) return false;
  
     const fromMin = tminMsg(ms.from);
